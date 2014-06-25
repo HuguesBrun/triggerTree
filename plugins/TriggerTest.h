@@ -67,6 +67,9 @@
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonFwd.h"
 
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+
 
 // root stuff !
 #include "TH1D.h"
@@ -140,6 +143,12 @@ class TriggerTest : public edm::EDAnalyzer {
     int T_Event_RunNumber;
     int T_Event_EventNumber;
     int T_Event_LuminosityBlock;
+    
+    int T_Event_nPU;
+    float T_Event_nTruePU;
+    int T_Event_nPUm;
+    int T_Event_nPUp;
+    float T_Event_AveNTruePU;
     
     std::vector<int> *T_Event_pathsFired;
     

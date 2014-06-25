@@ -61,6 +61,32 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     T_Event_RunNumber = iEvent.id().run();
     T_Event_EventNumber = iEvent.id().event();
     T_Event_LuminosityBlock = iEvent.id().luminosityBlock();
+    
+    float truePu=0.;
+    Handle<std::vector< PileupSummaryInfo > > puInfo;
+    try {
+        iEvent.getByLabel("addPileupInfo",puInfo);
+        std::vector<PileupSummaryInfo>::const_iterator PVI;
+        //The in-time crossing is getBunchCrossing = 0; negative ones are early, positive ones are late.
+        for(PVI = puInfo->begin(); PVI != puInfo->end(); ++PVI) {
+            
+            //    std::cout << " Pileup Information: bunchXing, nvtx: " << PVI->getBunchCrossing() << " " << PVI->getPU_NumInteractions() << std::endl;
+            if(PVI->getBunchCrossing()==0){
+                T_Event_nPU =PVI->getPU_NumInteractions();
+                T_Event_nTruePU=PVI->getTrueNumInteractions();
+                
+            }
+            
+            else if(PVI->getBunchCrossing()==-1){
+                T_Event_nPUm=PVI->getPU_NumInteractions();
+            }
+            else if(PVI->getBunchCrossing()==1){
+                T_Event_nPUp=PVI->getPU_NumInteractions();
+            }
+            truePu += PVI->getTrueNumInteractions();
+        }
+    } catch (...) {}
+    T_Event_AveNTruePU=truePu;
 
  
     bool changedConfig = false;
@@ -368,7 +394,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         T_Gen_MotherID->push_back(MomPart->pdgId());
         T_Gen_FromW->push_back(hasWasMother(genMuon));
         T_Gen_FromTau->push_back(hasTauasMother(genMuon));
-        
+       
         
     }
     
@@ -391,7 +417,6 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         T_Muon_Pt->push_back(muon->pt());
     
     }*/
-    
     mytree_->Fill();
     
     endEvent();
@@ -407,6 +432,12 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Event_RunNumber", &T_Event_RunNumber, "T_Event_RunNumber/I");
     mytree_->Branch("T_Event_EventNumber", &T_Event_EventNumber, "T_Event_EventNumber/I");
     mytree_->Branch("T_Event_LuminosityBlock", &T_Event_LuminosityBlock, "T_Event_LuminosityBlock/I");
+    
+    mytree_->Branch("T_Event_nPU", &T_Event_nPU, "T_Event_nPU/I");
+    mytree_->Branch("T_Event_nTruePU", &T_Event_nTruePU, "T_Event_nTruePU/F");
+    mytree_->Branch("T_Event_nPUm", &T_Event_nPUm, "T_Event_nPUm/I");
+    mytree_->Branch("T_Event_nPUp", &T_Event_nPUp, "T_Event_nPUp/I");
+    mytree_->Branch("T_Event_AveNTruePU", &T_Event_AveNTruePU, "T_Event_AveNTruePU/F");
     
     
     mytree_->Branch("T_Event_pathsFired", "std::vector<int>", &T_Event_pathsFired);
@@ -442,6 +473,8 @@ TriggerTest::beginJob()
 void 
 TriggerTest::endJob() 
 {
+    rootFile_->Write();
+    rootFile_->Close();
 }
 
 void
