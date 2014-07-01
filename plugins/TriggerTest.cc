@@ -174,6 +174,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     for (unsigned int i = 0 ; i <  filterToMatch_.size() ; i++){
         if (!(hltFilters[i].isValid())) continue;
         TString nameOfFilter = filterToMatch_.at(i);
+     //   cout << "filter to match=" << nameOfFilter << endl;
         if ((nameOfFilter.Contains("EtFilter"))||(nameOfFilter.Contains("ClusterShapeFilter"))||(nameOfFilter.Contains("EcalIsoFilter"))||(nameOfFilter.Contains("HEFilter"))){
         //if ((nameOfFilter.Contains("ClusterShapeFilter"))){
             edm::LogVerbatim("TriggerTest") << "et filter !!";
@@ -189,7 +190,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
-                T_Trig_Leg->push_back(j);
+                T_Trig_Leg->push_back(i);
                 if (clusterShapeMap.isValid()){
                     recoEcalCandidateMap::const_iterator valSigEta = (*clusterShapeMap).find(ref);
                     T_Trig_Value->push_back(valSigEta->val);
@@ -198,7 +199,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Value2->push_back(-1);
             }
         }
-        else if (nameOfFilter.Contains("HcalIsoFilter")){
+        if (nameOfFilter.Contains("HcalIsoFilter")){
             edm::LogVerbatim("TriggerTest") << "HCAL iso";
             edm::LogVerbatim("TriggerTest") << nameOfFilter;
             edm::Handle<reco::ElectronSeedCollection> hltElectronSeed;
@@ -212,7 +213,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
-                T_Trig_Leg->push_back(j);
+                T_Trig_Leg->push_back(i);
                 reco::SuperClusterRef recr2 = ref->superCluster();
                 if (hltElectronSeed.isValid()){
                     int nmatch = 0;
@@ -230,7 +231,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Value2->push_back(-1);
             }
         }
-        else if ((nameOfFilter.Contains("PixelMatchFilter"))){
+        if ((nameOfFilter.Contains("PixelMatchFilter"))){
             //if ((nameOfFilter.Contains("ClusterShapeFilter"))){
             edm::LogVerbatim("TriggerTest") << "pixel match";
             edm::LogVerbatim("TriggerTest") << nameOfFilter;
@@ -245,7 +246,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
-                T_Trig_Leg->push_back(j);
+                T_Trig_Leg->push_back(i);
                 reco::SuperClusterRef recr2 = ref->superCluster();
                 if (hltElectronColl.isValid()){
                     float candValEoP = -1;
@@ -280,7 +281,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
-                T_Trig_Leg->push_back(j);
+                T_Trig_Leg->push_back(i);
                 if (hltElectrondPhiMap.isValid()){
                     reco::ElectronIsolationMap::const_iterator valSigEta = (*hltElectrondPhiMap).find(ref);
                     T_Trig_Value->push_back(valSigEta->val);
@@ -310,7 +311,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
-                T_Trig_Leg->push_back(j);
+                T_Trig_Leg->push_back(i);
                 if (hltElectrondPhiMap.isValid()){
                     reco::ElectronIsolationMap::const_iterator valSigEta = (*hltElectrondPhiMap).find(ref);
                     T_Trig_Value->push_back(valSigEta->val);
@@ -338,12 +339,14 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
-                T_Trig_Leg->push_back(j);
+                T_Trig_Leg->push_back(i);
                 if (hltElectrondPhiMap.isValid()){
                     reco::ElectronIsolationMap::const_iterator valSigEta = (*hltElectrondPhiMap).find(ref);
                     T_Trig_Value->push_back(valSigEta->val);
                 }
                 else T_Trig_Value->push_back(-1);
+                T_Trig_Value2->push_back(-1);
+
             }
         }
         if ((nameOfFilter.Contains("DphiFilter"))){
@@ -359,8 +362,84 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
-                T_Trig_Leg->push_back(j);
+                T_Trig_Leg->push_back(i);
                 T_Trig_Value->push_back(-1);
+                T_Trig_Value2->push_back(-1);
+            }
+        }
+      /*  if (nameOfFilter.Contains("L3Filtered24Q")){
+            //if ((nameOfFilter.Contains("ClusterShapeFilter"))){
+          //  edm::LogVerbatim("TriggerTest") << "last !!";
+            std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
+            reco::RecoChargedCandidateRef ref;
+            hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
+            edm::Handle<reco::IsoDepositMap> IsoCaloMap;
+            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolations","",HLTprocess_.c_str()),IsoCaloMap);
+            edm::Handle<reco::IsoDepositMap> IsoTkMap;
+            iEvent.getByLabel(edm::InputTag(mapsValues_.at(i),"trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
+            for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
+                ref = prevMuonRefs[j];
+                T_Trig_Eta->push_back(ref->eta());
+                T_Trig_Pt->push_back(ref->pt());
+                T_Trig_Phi->push_back(ref->phi());
+                T_Trig_Leg->push_back(i);
+                if (IsoTkMap.isValid()) {
+                    reco::IsoDeposit theTkIsolation = (*IsoTkMap)[ref];
+                    T_Trig_Value->push_back(theTkIsolation.depositWithin(0.3));
+                }
+                else T_Trig_Value->push_back(-1);
+                if (IsoCaloMap.isValid()){
+                    reco::IsoDeposit theCaloIsolation = (*IsoCaloMap)[ref];
+                    T_Trig_Value2->push_back(theCaloIsolation.depositWithin(0.3));
+                }
+                else T_Trig_Value2->push_back(-1);
+
+            }
+        }*/
+        else if (nameOfFilter.Contains("L3PreFiltered8")||nameOfFilter.Contains("L3Filtered17")||nameOfFilter.Contains("TrkFiltered8")){
+            //if ((nameOfFilter.Contains("ClusterShapeFilter"))){
+        //    cout << nameOfFilter << endl;
+          //  edm::LogVerbatim("TriggerTest") << "last !!";
+            std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
+            reco::RecoChargedCandidateRef ref;
+            hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
+            edm::Handle<reco::IsoDepositMap> IsoCaloMap;
+            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolations","",HLTprocess_.c_str()),IsoCaloMap);
+            edm::Handle<reco::IsoDepositMap> IsoTkMap;
+            iEvent.getByLabel(edm::InputTag(mapsValues_.at(i),"trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
+            for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
+                ref = prevMuonRefs[j];
+                T_Trig_Eta->push_back(ref->eta());
+                T_Trig_Pt->push_back(ref->pt());
+                T_Trig_Phi->push_back(ref->phi());
+                T_Trig_Leg->push_back(i);
+                if (IsoTkMap.isValid()) {
+                    reco::IsoDeposit theTkIsolation = (*IsoTkMap)[ref];
+                    T_Trig_Value->push_back(theTkIsolation.depositWithin(0.3));
+                }
+                else T_Trig_Value->push_back(-1);
+      /*          if (IsoCaloMap.isValid()){
+                    reco::IsoDeposit theCaloIsolation = (*IsoCaloMap)[ref];
+                    T_Trig_Value2->push_back(theCaloIsolation.depositWithin(0.3));
+                }*/
+               T_Trig_Value2->push_back(-1);
+
+            }
+        }
+        else {//if ((nameOfFilter.Contains("L3crIsoRhoFiltered0p15")||(nameOfFilter.Contains("L1Filtered"))||(nameOfFilter.Contains("L2Filtered"))||(nameOfFilter.Contains("L2")))){
+            //if ((nameOfFilter.Contains("ClusterShapeFilter"))){
+            //  edm::LogVerbatim("TriggerTest") << "last !!";
+            std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
+            reco::RecoChargedCandidateRef ref;
+            hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
+            for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
+                ref = prevMuonRefs[j];
+                T_Trig_Eta->push_back(ref->eta());
+                T_Trig_Pt->push_back(ref->pt());
+                T_Trig_Phi->push_back(ref->phi());
+                T_Trig_Leg->push_back(i);
+                T_Trig_Value->push_back(-1);
+                T_Trig_Value2->push_back(-1);
             }
         }
     }
