@@ -367,7 +367,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Value2->push_back(-1);
             }
         }
-      /*  if (nameOfFilter.Contains("L3Filtered24Q")){
+       if (nameOfFilter.Contains("L3Filtered24Q")){
             //if ((nameOfFilter.Contains("ClusterShapeFilter"))){
           //  edm::LogVerbatim("TriggerTest") << "last !!";
             std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
@@ -395,7 +395,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 else T_Trig_Value2->push_back(-1);
 
             }
-        }*/
+        }
         else if (nameOfFilter.Contains("L3PreFiltered8")||nameOfFilter.Contains("L3Filtered17")||nameOfFilter.Contains("TrkFiltered8")){
             //if ((nameOfFilter.Contains("ClusterShapeFilter"))){
         //    cout << nameOfFilter << endl;
