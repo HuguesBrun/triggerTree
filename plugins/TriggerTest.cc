@@ -16,6 +16,7 @@ TriggerTest::TriggerTest(const edm::ParameterSet& iConfig)
     filterToMatch_ = iConfig.getParameter<std::vector<std::string> >("filterToMatch");
     mapsValues_ = iConfig.getParameter<std::vector<std::string> >("mapsValues");
     HLTprocess_   = iConfig.getParameter<std::string>("HLTprocess");
+    rhoTag_ = iConfig.getParameter<edm::InputTag>("rhoTag");
     outputFile_   = iConfig.getParameter<std::string>("outputFile");
     rootFile_ = TFile::Open(outputFile_.c_str(),"RECREATE");
 
@@ -125,6 +126,11 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     //if (mapsValues_.size() != filterToMatch_.size()) cout << "warning MAP and filters are not matching 1 to 1 !!!" << endl;
     
+    // get rho
+    edm::Handle<double> rhoHandle;
+    iEvent.getByLabel(rhoTag_, rhoHandle);
+    double rho = -1;
+    
     edm::Handle<trigger::TriggerEvent> triggerSummary;
     iEvent.getByLabel(triggerSummaryLabel_, triggerSummary);
     trigger::TriggerObjectCollection allTriggerObjects = triggerSummary->getObjects();
@@ -181,6 +187,8 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
                 T_Trig_Leg->push_back(i);
+                if (rhoHandle.isValid()) rho = *(rhoHandle.product());
+                T_Trig_rho->push_back(rho);
                 if (IsoTkMap.isValid()) {
                     reco::IsoDeposit theTkIsolation = (*IsoTkMap)[ref];
                     T_Trig_Value->push_back(theTkIsolation.depositWithin(0.3));
@@ -206,12 +214,17 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Leg->push_back(i);
                 T_Trig_Value->push_back(-1);
                 T_Trig_Value2->push_back(-1);
+                T_Trig_rho->push_back(-1);
+
             }
         }
     
     }
     
 
+    
+    
+    
     
     int theNbOfGen = genParticles->size();
     for (int i=0 ; i < theNbOfGen; i++){
@@ -266,6 +279,7 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Trig_Leg", "std::vector<int>", &T_Trig_Leg);
     mytree_->Branch("T_Trig_Value", "std::vector<float>", &T_Trig_Value);
     mytree_->Branch("T_Trig_Value2", "std::vector<float>", &T_Trig_Value2);
+    mytree_->Branch("T_Trig_rho", "std::vector<float>", &T_Trig_rho);
     
     
     mytree_->Branch("T_Gen_Eta", "std::vector<float>", &T_Gen_Eta);
@@ -306,6 +320,7 @@ TriggerTest::beginEvent()
     T_Trig_Leg = new std::vector<int>;
     T_Trig_Value = new std::vector<float>;
     T_Trig_Value2 = new std::vector<float>;
+    T_Trig_rho = new std::vector<float>;
     
     T_Gen_Eta = new std::vector<float>;
     T_Gen_Phi = new std::vector<float>;
@@ -336,6 +351,7 @@ TriggerTest::endEvent()
     delete T_Trig_Leg;
     delete T_Trig_Value;
     delete T_Trig_Value2;
+    delete T_Trig_rho;
     
     delete T_Gen_Eta;
     delete T_Gen_Phi;

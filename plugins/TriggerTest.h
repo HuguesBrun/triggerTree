@@ -134,6 +134,8 @@ class TriggerTest : public edm::EDAnalyzer {
     std::vector<std::string> pathsToSave_;
     std::vector<std::string> filterToMatch_;
     std::vector<std::string> mapsValues_;
+    edm::InputTag rhoTag_;
+    
     
     std::string HLTprocess_;
     std::string outputFile_; // output file
@@ -165,6 +167,7 @@ class TriggerTest : public edm::EDAnalyzer {
     std::vector<int> *T_Trig_Leg;
     std::vector<float> *T_Trig_Value;
     std::vector<float> *T_Trig_Value2;
+    std::vector<float> *T_Trig_rho;
     
     std::vector<float> *T_Gen_Eta;
     std::vector<float> *T_Gen_Phi;
