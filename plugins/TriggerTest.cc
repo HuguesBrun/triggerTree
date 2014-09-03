@@ -18,7 +18,13 @@ TriggerTest::TriggerTest(const edm::ParameterSet& iConfig)
     HLTprocess_   = iConfig.getParameter<std::string>("HLTprocess");
     rhoTag_ = iConfig.getParameter<edm::InputTag>("rhoTag");
     outputFile_   = iConfig.getParameter<std::string>("outputFile");
+    trkExtractorPSet_ = iConfig.getParameter<edm::ParameterSet>("TrkExtractorPSet");
+   // caloExtractorPSet_ = iConfig.getParameter<edm::ParameterSet>("CaloExtractorPSet");
     rootFile_ = TFile::Open(outputFile_.c_str(),"RECREATE");
+    
+    
+    std::string trkExtractorName = trkExtractorPSet_.getParameter<std::string>("ComponentName");
+    trkExtractor = IsoDepositExtractorFactory::get()->create( trkExtractorName, trkExtractorPSet_, consumesCollector());
 
 }
 
@@ -122,7 +128,10 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
         else T_Event_pathsFired->push_back(0);
     }
-    
+
+   
+    //std::string caloExtractorName = caloExtractorPSet_.getParameter<std::string>("ComponentName");
+    //caloExtractor = IsoDepositExtractorFactory::get()->create( caloExtractorName, caloExtractorPSet_, consumesCollector());
     
     //if (mapsValues_.size() != filterToMatch_.size()) cout << "warning MAP and filters are not matching 1 to 1 !!!" << endl;
     
@@ -181,8 +190,35 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolations","",HLTprocess_.c_str()),IsoCaloMap);
             edm::Handle<reco::IsoDepositMap> IsoTkMap;
             iEvent.getByLabel(edm::InputTag(mapsValues_.at(i),"trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
+            
+               unsigned int nMuons = prevMuonRefs.size();
+            
+               reco::IsoDeposit::Vetos trkVetos(nMuons);
+               std::vector<reco::IsoDeposit> trkDeps(nMuons);
+            
+          //     reco::IsoDeposit::Vetos caloVetos(nMuons);
+           //    std::vector<reco::IsoDeposit> caloDeps(nMuons);
+            
             for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
                 ref = prevMuonRefs[j];
+                reco::TrackRef mu = ref->track();
+                trkDeps[j] = trkExtractor->deposit(iEvent, iSetup, *mu);
+                trkVetos[j] = trkDeps[j].veto();
+                
+           //     caloDeps[j] = caloExtractor->deposit(iEvent, iSetup, *mu);
+           //     caloVetos[j] = caloDeps[j].veto();
+                
+            }
+            
+            for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
+                ref = prevMuonRefs[j];
+                reco::TrackRef mu = ref->track();
+            //    reco::IsoDeposit trackDep = trkExtractor->deposit(iEvent, iSetup, *mu);
+            //    reco::IsoDeposit::Veto trkVeto = trackDep.veto();
+                float trkIso = trkDeps[j].depositWithin(0.3, trkVetos, -1.);
+                T_Trig_TkIsoVeto->push_back(trkIso);
+            //    float caloIsoSum = caloDeps[j].depositWithin(0.3, caloVetos);
+            //    cout << "caloIso=" << caloIsoSum << endl;
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
@@ -277,6 +313,7 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Trig_Pt", "std::vector<float>", &T_Trig_Pt);
     mytree_->Branch("T_Trig_Phi", "std::vector<float>", &T_Trig_Phi);
     mytree_->Branch("T_Trig_Leg", "std::vector<int>", &T_Trig_Leg);
+    mytree_->Branch("T_Trig_TkIsoVeto", "std::vector<float>", &T_Trig_TkIsoVeto);
     mytree_->Branch("T_Trig_Value", "std::vector<float>", &T_Trig_Value);
     mytree_->Branch("T_Trig_Value2", "std::vector<float>", &T_Trig_Value2);
     mytree_->Branch("T_Trig_rho", "std::vector<float>", &T_Trig_rho);
@@ -318,6 +355,7 @@ TriggerTest::beginEvent()
     T_Trig_Pt = new std::vector<float>;
     T_Trig_Phi = new std::vector<float>;
     T_Trig_Leg = new std::vector<int>;
+    T_Trig_TkIsoVeto = new std::vector<float>;
     T_Trig_Value = new std::vector<float>;
     T_Trig_Value2 = new std::vector<float>;
     T_Trig_rho = new std::vector<float>;
@@ -349,6 +387,7 @@ TriggerTest::endEvent()
     delete T_Trig_Pt;
     delete T_Trig_Phi;
     delete T_Trig_Leg;
+    delete T_Trig_TkIsoVeto;
     delete T_Trig_Value;
     delete T_Trig_Value2;
     delete T_Trig_rho;

@@ -29,6 +29,7 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
@@ -75,6 +76,14 @@
 
 #include "DataFormats/RecoCandidate/interface/IsoDeposit.h"
 #include "DataFormats/RecoCandidate/interface/IsoDepositFwd.h"
+
+// extract isolation deposit
+#include "PhysicsTools/IsolationAlgos/interface/IsoDepositExtractor.h"
+#include "PhysicsTools/IsolationAlgos/interface/IsoDepositExtractor.h"
+#include "PhysicsTools/IsolationAlgos/interface/IsoDepositExtractorFactory.h"
+
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
 
 
 // root stuff !
@@ -124,6 +133,8 @@ class TriggerTest : public edm::EDAnalyzer {
 
       // ----------member data ---------------------------
     HLTConfigProvider hltConfig;
+    reco::isodeposit::IsoDepositExtractor * trkExtractor;
+   // reco::isodeposit::IsoDepositExtractor * caloExtractor;
     
     //edm::InputTag electronsCollection_;
     //edm::InputTag muonsCollection_;
@@ -139,6 +150,9 @@ class TriggerTest : public edm::EDAnalyzer {
     
     std::string HLTprocess_;
     std::string outputFile_; // output file
+    
+    edm::ParameterSet trkExtractorPSet_;
+   // edm::ParameterSet caloExtractorPSet_;
     
     // ---------- output ROOT file
     TFile*  rootFile_;
@@ -165,6 +179,7 @@ class TriggerTest : public edm::EDAnalyzer {
     std::vector<float> *T_Trig_Pt;
     std::vector<float> *T_Trig_Phi;
     std::vector<int> *T_Trig_Leg;
+    std::vector<float> *T_Trig_TkIsoVeto;
     std::vector<float> *T_Trig_Value;
     std::vector<float> *T_Trig_Value2;
     std::vector<float> *T_Trig_rho;
