@@ -179,6 +179,11 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
             edm::Handle<reco::IsoDepositMap> IsoCaloMap;
             iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolations","",HLTprocess_.c_str()),IsoCaloMap);
+            edm::Handle<reco::IsoDepositMap> IsoCaloMapNoECAL;
+            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsNoECAL","",HLTprocess_.c_str()),IsoCaloMapNoECAL);
+            edm::Handle<reco::IsoDepositMap> IsoCaloMapNoHCAL;
+            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsNoHCAL","",HLTprocess_.c_str()),IsoCaloMapNoHCAL);
+            
             edm::Handle<reco::IsoDepositMap> IsoTkMap;
             iEvent.getByLabel(edm::InputTag(mapsValues_.at(i),"trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
             for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
@@ -199,6 +204,16 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     T_Trig_Value2->push_back(theCaloIsolation.depositWithin(0.3));
                 }
                 else T_Trig_Value2->push_back(-1);
+                if (IsoCaloMapNoHCAL.isValid()){
+                    reco::IsoDeposit theCaloIsolationNoHCAL = (*IsoCaloMapNoHCAL)[ref];
+                    T_Trig_Value_NoHCAL->push_back(theCaloIsolationNoHCAL.depositWithin(0.3));
+                }
+                else T_Trig_Value_NoHCAL->push_back(-1);
+                if (IsoCaloMapNoECAL.isValid()){
+                    reco::IsoDeposit theCaloIsolationNoECAL = (*IsoCaloMapNoECAL)[ref];
+                    T_Trig_Value_NoECAL->push_back(theCaloIsolationNoECAL.depositWithin(0.3));
+                }
+                else T_Trig_Value_NoECAL->push_back(-1);
                 
             }
         }
@@ -278,6 +293,8 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Trig_Phi", "std::vector<float>", &T_Trig_Phi);
     mytree_->Branch("T_Trig_Leg", "std::vector<int>", &T_Trig_Leg);
     mytree_->Branch("T_Trig_Value", "std::vector<float>", &T_Trig_Value);
+    mytree_->Branch("T_Trig_Value_NoECAL", "std::vector<float>", &T_Trig_Value_NoECAL);
+    mytree_->Branch("T_Trig_Value_NoHCAL", "std::vector<float>", &T_Trig_Value_NoHCAL);
     mytree_->Branch("T_Trig_Value2", "std::vector<float>", &T_Trig_Value2);
     mytree_->Branch("T_Trig_rho", "std::vector<float>", &T_Trig_rho);
     
@@ -319,6 +336,8 @@ TriggerTest::beginEvent()
     T_Trig_Phi = new std::vector<float>;
     T_Trig_Leg = new std::vector<int>;
     T_Trig_Value = new std::vector<float>;
+    T_Trig_Value_NoECAL = new std::vector<float>;
+    T_Trig_Value_NoHCAL = new std::vector<float>;
     T_Trig_Value2 = new std::vector<float>;
     T_Trig_rho = new std::vector<float>;
     
@@ -350,6 +369,8 @@ TriggerTest::endEvent()
     delete T_Trig_Phi;
     delete T_Trig_Leg;
     delete T_Trig_Value;
+    delete T_Trig_Value_NoECAL;
+    delete T_Trig_Value_NoHCAL;
     delete T_Trig_Value2;
     delete T_Trig_rho;
     
