@@ -181,6 +181,8 @@ class TriggerTest : public edm::EDAnalyzer {
     std::vector<int> *T_Trig_Leg;
     std::vector<float> *T_Trig_TkIsoVeto;
     std::vector<float> *T_Trig_Value;
+    std::vector<float> *T_Trig_Value_NoECAL;
+    std::vector<float> *T_Trig_Value_NoHCAL;
     std::vector<float> *T_Trig_Value2;
     std::vector<float> *T_Trig_rho;
     
