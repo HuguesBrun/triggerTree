@@ -77,6 +77,8 @@
 #include "DataFormats/RecoCandidate/interface/IsoDeposit.h"
 #include "DataFormats/RecoCandidate/interface/IsoDepositFwd.h"
 
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidateIsolation.h"
+
 // extract isolation deposit
 #include "PhysicsTools/IsolationAlgos/interface/IsoDepositExtractor.h"
 #include "PhysicsTools/IsolationAlgos/interface/IsoDepositExtractor.h"
@@ -184,6 +186,11 @@ class TriggerTest : public edm::EDAnalyzer {
     std::vector<float> *T_Trig_Value_NoECAL;
     std::vector<float> *T_Trig_Value_NoHCAL;
     std::vector<float> *T_Trig_Value2;
+    std::vector<float> *T_Trig_PFecal;
+    std::vector<float> *T_Trig_PFhcal;
+    std::vector<float> *T_Trig_PFecalUnseeded;
+    std::vector<float> *T_Trig_PFhcalUnseeded;
+    
     std::vector<float> *T_Trig_rho;
     
     std::vector<float> *T_Gen_Eta;

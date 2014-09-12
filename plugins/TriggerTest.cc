@@ -193,6 +193,18 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             edm::Handle<reco::IsoDepositMap> IsoCaloMapNoHCAL;
             iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsNoHCAL","",HLTprocess_.c_str()),IsoCaloMapNoHCAL);
             
+            edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMap;
+            iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIso","",HLTprocess_.c_str()),hcalIsoMap);
+         
+            edm::Handle<reco::RecoChargedCandidateIsolationMap> ecalIsoMap;
+            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIso","",HLTprocess_.c_str()),ecalIsoMap);
+            
+            edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMapUnSeeded;
+            iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),hcalIsoMapUnSeeded);
+            
+            edm::Handle<reco::RecoChargedCandidateIsolationMap> ecalIsoMapUnSeeded;
+            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),ecalIsoMapUnSeeded);
+            
             edm::Handle<reco::IsoDepositMap> IsoTkMap;
             iEvent.getByLabel(edm::InputTag(mapsValues_.at(i),"trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
             
@@ -251,7 +263,39 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 }
                 else T_Trig_Value_NoECAL->push_back(-1);
                 
+                if (hcalIsoMap.isValid()){
+                    reco::RecoChargedCandidateIsolationMap::const_iterator valHcalIso = (*hcalIsoMap).find(ref);
+                    T_Trig_PFhcal->push_back(valHcalIso->val);
+                }
+                else T_Trig_PFhcal->push_back(-1.);
+                if (ecalIsoMap.isValid()){
+                    reco::RecoChargedCandidateIsolationMap::const_iterator valEcalIso = (*ecalIsoMap).find(ref);
+                    T_Trig_PFecal->push_back(valEcalIso->val);
+                }
+                else T_Trig_PFecal->push_back(-1.);
+                
+                if (hcalIsoMapUnSeeded.isValid()){
+                    reco::RecoChargedCandidateIsolationMap::const_iterator valHcalIsoUnSeeded = (*hcalIsoMapUnSeeded).find(ref);
+                    T_Trig_PFhcalUnseeded->push_back(valHcalIsoUnSeeded->val);
+                }
+                else T_Trig_PFhcalUnseeded->push_back(-1.);
+                if (ecalIsoMapUnSeeded.isValid()){
+                    reco::RecoChargedCandidateIsolationMap::const_iterator valEcalIsoUnSeeded = (*ecalIsoMapUnSeeded).find(ref);
+                    T_Trig_PFecalUnseeded->push_back(valEcalIsoUnSeeded->val);
+                }
+                else T_Trig_PFecalUnseeded->push_back(-1.);
+                
             }
+        }
+        else if (nameOfFilter.Contains("hltMuonHcalIsoFilter")){
+            std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
+            reco::RecoChargedCandidateRef ref;
+            hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
+            cout << "nb of candidates =" << prevMuonRefs.size() << endl;
+            for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
+                ref = prevMuonRefs[j];
+            }
+            
         }
         else {
             std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
@@ -266,7 +310,12 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Value->push_back(-1);
                 T_Trig_Value2->push_back(-1);
                 T_Trig_rho->push_back(-1);
-
+                T_Trig_Value_NoHCAL->push_back(-1);
+                T_Trig_Value_NoECAL->push_back(-1);
+                T_Trig_PFhcal->push_back(-1);
+                T_Trig_PFecal->push_back(-1);
+                T_Trig_PFhcalUnseeded->push_back(-1);
+                T_Trig_PFecalUnseeded->push_back(-1);
             }
         }
     
@@ -333,6 +382,10 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Trig_Value_NoECAL", "std::vector<float>", &T_Trig_Value_NoECAL);
     mytree_->Branch("T_Trig_Value_NoHCAL", "std::vector<float>", &T_Trig_Value_NoHCAL);
     mytree_->Branch("T_Trig_Value2", "std::vector<float>", &T_Trig_Value2);
+    mytree_->Branch("T_Trig_PFecal", "std::vector<float>", &T_Trig_PFecal);
+    mytree_->Branch("T_Trig_PFhcal", "std::vector<float>", &T_Trig_PFhcal);
+    mytree_->Branch("T_Trig_PFecalUnseeded", "std::vector<float>", &T_Trig_PFecalUnseeded);
+    mytree_->Branch("T_Trig_PFhcalUnseeded", "std::vector<float>", &T_Trig_PFhcalUnseeded);
     mytree_->Branch("T_Trig_rho", "std::vector<float>", &T_Trig_rho);
     
     
@@ -377,6 +430,10 @@ TriggerTest::beginEvent()
     T_Trig_Value_NoECAL = new std::vector<float>;
     T_Trig_Value_NoHCAL = new std::vector<float>;
     T_Trig_Value2 = new std::vector<float>;
+    T_Trig_PFecal = new std::vector<float>;
+    T_Trig_PFhcal = new std::vector<float>;
+    T_Trig_PFecalUnseeded = new std::vector<float>;
+    T_Trig_PFhcalUnseeded = new std::vector<float>;
     T_Trig_rho = new std::vector<float>;
     
     T_Gen_Eta = new std::vector<float>;
@@ -411,6 +468,10 @@ TriggerTest::endEvent()
     delete T_Trig_Value_NoECAL;
     delete T_Trig_Value_NoHCAL;
     delete T_Trig_Value2;
+    delete T_Trig_PFecal;
+    delete T_Trig_PFhcal;
+    delete T_Trig_PFecalUnseeded;
+    delete T_Trig_PFhcalUnseeded;
     delete T_Trig_rho;
     
     delete T_Gen_Eta;
