@@ -169,6 +169,10 @@ class TriggerTest : public edm::EDAnalyzer {
     std::vector<float> *T_Gen_Eta;
     std::vector<float> *T_Gen_Phi;
     std::vector<float> *T_Gen_Pt;
+    std::vector<float> *T_Gen_Px;
+    std::vector<float> *T_Gen_Py;
+    std::vector<float> *T_Gen_Pz;
+    std::vector<float> *T_Gen_Energy;
     std::vector<int> *T_Gen_pdgID;
     std::vector<int> *T_Gen_MotherID;
     std::vector<int> *T_Gen_FromW;
