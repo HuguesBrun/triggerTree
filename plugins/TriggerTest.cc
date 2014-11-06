@@ -7,9 +7,9 @@
 TriggerTest::TriggerTest(const edm::ParameterSet& iConfig)
 
 {
-   //now do what ever initialization is needed
- //   electronsCollection_      = iConfig.getParameter<edm::InputTag>("electronsCollection");
-  //  muonsCollection_      = iConfig.getParameter<edm::InputTag>("muonsCollection");
+    //now do what ever initialization is needed
+    //   electronsCollection_      = iConfig.getParameter<edm::InputTag>("electronsCollection");
+    //  muonsCollection_      = iConfig.getParameter<edm::InputTag>("muonsCollection");
     triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResultTag");
     triggerSummaryLabel_= iConfig.getParameter<edm::InputTag>("triggerSummaryTag");
     pathsToSave_ = iConfig.getParameter<std::vector<std::string> >("pathsToSave");
@@ -19,22 +19,22 @@ TriggerTest::TriggerTest(const edm::ParameterSet& iConfig)
     rhoTag_ = iConfig.getParameter<edm::InputTag>("rhoTag");
     outputFile_   = iConfig.getParameter<std::string>("outputFile");
     trkExtractorPSet_ = iConfig.getParameter<edm::ParameterSet>("TrkExtractorPSet");
-   // caloExtractorPSet_ = iConfig.getParameter<edm::ParameterSet>("CaloExtractorPSet");
+    // caloExtractorPSet_ = iConfig.getParameter<edm::ParameterSet>("CaloExtractorPSet");
     rootFile_ = TFile::Open(outputFile_.c_str(),"RECREATE");
     
     
     std::string trkExtractorName = trkExtractorPSet_.getParameter<std::string>("ComponentName");
     trkExtractor = IsoDepositExtractorFactory::get()->create( trkExtractorName, trkExtractorPSet_, consumesCollector());
-
+    
 }
 
 
 TriggerTest::~TriggerTest()
 {
- 
-   // do anything here that needs to be done at desctruction time
-   // (e.g. close files, deallocate resources etc.)
-
+    
+    // do anything here that needs to be done at desctruction time
+    // (e.g. close files, deallocate resources etc.)
+    
 }
 
 
@@ -51,12 +51,12 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     beginEvent(); //create the vectors
     
-   /* edm::Handle<reco::GsfElectronCollection> electronsCollection;
-    iEvent.getByLabel(electronsCollection_ , electronsCollection);
-
-    
-    edm::Handle < std::vector <reco::Muon> > recoMuons;
-	iEvent.getByLabel(muonsCollection_, recoMuons);*/
+    /* edm::Handle<reco::GsfElectronCollection> electronsCollection;
+     iEvent.getByLabel(electronsCollection_ , electronsCollection);
+     
+     
+     edm::Handle < std::vector <reco::Muon> > recoMuons;
+     iEvent.getByLabel(muonsCollection_, recoMuons);*/
     
     edm::Handle<GenEventInfoProduct> genEvent;
     iEvent.getByLabel("generator", genEvent);
@@ -64,7 +64,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     edm::Handle<reco::GenParticleCollection> genParticles;
     iEvent.getByLabel( "genParticles", genParticles );
-
+    
     T_Event_RunNumber = iEvent.id().run();
     T_Event_EventNumber = iEvent.id().event();
     T_Event_LuminosityBlock = iEvent.id().luminosityBlock();
@@ -94,8 +94,8 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         }
     } catch (...) {}
     T_Event_AveNTruePU=truePu;
-
- 
+    
+    
     bool changedConfig = false;
     if (!hltConfig.init(iEvent.getRun(), iSetup, HLTprocess_.c_str(), changedConfig)) {
         cout << "Initialization of HLTConfigProvider failed!!" << endl;
@@ -117,19 +117,19 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         if (triggerBits_.size() <nbPaths) cout << "an HLT paths is not found ! ! " << endl;
         
     }
-   
-  edm::Handle<edm::TriggerResults> triggerResults;
+    
+    edm::Handle<edm::TriggerResults> triggerResults;
     iEvent.getByLabel(triggerResultsTag_, triggerResults);
- 
+    
     for (unsigned int itePath = 0 ; itePath < triggerBits_.size() ; itePath++){
         if (triggerResults->accept(triggerBits_.at(itePath))) {
-	    edm::LogVerbatim("TriggerTest") << "passing path " << itePath << endl;
+            edm::LogVerbatim("TriggerTest") << "passing path " << itePath << endl;
             T_Event_pathsFired->push_back(1);
         }
         else T_Event_pathsFired->push_back(0);
     }
-
-   
+    
+    
     //std::string caloExtractorName = caloExtractorPSet_.getParameter<std::string>("ComponentName");
     //caloExtractor = IsoDepositExtractorFactory::get()->create( caloExtractorName, caloExtractorPSet_, consumesCollector());
     
@@ -163,24 +163,24 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     
     
-   /* for (unsigned k = 0 ; k < legObjects.size() ; k++){
+    /* for (unsigned k = 0 ; k < legObjects.size() ; k++){
      trigger::TriggerObject theObject = legObjects.at(k);
      T_Trig_Pt->push_back(theObject.pt());
      T_Trig_Eta->push_back(theObject.eta());
      T_Trig_Phi->push_back(theObject.phi());
      T_Trig_Leg->push_back(legRefs.at(k));
-    }*/
-
+     }*/
+    
     TrigFiltVect hltFilters( filterToMatch_.size() );
     for (unsigned int i = 0 ; i <  filterToMatch_.size() ; i++){
         // cout << "i=" << i << endl;
         iEvent.getByLabel(edm::InputTag(filterToMatch_.at(i),"",HLTprocess_.c_str()), hltFilters[i]);
     }
-   
+    
     for (unsigned int i = 0 ; i <  filterToMatch_.size() ; i++){
         if (!(hltFilters[i].isValid())) continue;
         TString nameOfFilter = filterToMatch_.at(i);
-
+        
         
         if (nameOfFilter.Contains("hltL3fL1sMu16L1f0L2f16QL3Filtered24Q")){
             std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
@@ -195,7 +195,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             
             edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMap;
             iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIso","",HLTprocess_.c_str()),hcalIsoMap);
-         
+            
             edm::Handle<reco::RecoChargedCandidateIsolationMap> ecalIsoMap;
             iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIso","",HLTprocess_.c_str()),ecalIsoMap);
             
@@ -206,15 +206,15 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),ecalIsoMapUnSeeded);
             
             edm::Handle<reco::IsoDepositMap> IsoTkMap;
-            iEvent.getByLabel(edm::InputTag(mapsValues_.at(i),"trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
+            iEvent.getByLabel(edm::InputTag("hltL3MuonCombRelIsolationsIterTrkRegIter02","trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
             
-               unsigned int nMuons = prevMuonRefs.size();
+            unsigned int nMuons = prevMuonRefs.size();
             
-               reco::IsoDeposit::Vetos trkVetos(nMuons);
-               std::vector<reco::IsoDeposit> trkDeps(nMuons);
+            reco::IsoDeposit::Vetos trkVetos(nMuons);
+            std::vector<reco::IsoDeposit> trkDeps(nMuons);
             
-          //     reco::IsoDeposit::Vetos caloVetos(nMuons);
-           //    std::vector<reco::IsoDeposit> caloDeps(nMuons);
+            //     reco::IsoDeposit::Vetos caloVetos(nMuons);
+            //    std::vector<reco::IsoDeposit> caloDeps(nMuons);
             
             for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
                 ref = prevMuonRefs[j];
@@ -222,20 +222,20 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 trkDeps[j] = trkExtractor->deposit(iEvent, iSetup, *mu);
                 trkVetos[j] = trkDeps[j].veto();
                 
-           //     caloDeps[j] = caloExtractor->deposit(iEvent, iSetup, *mu);
-           //     caloVetos[j] = caloDeps[j].veto();
+                //     caloDeps[j] = caloExtractor->deposit(iEvent, iSetup, *mu);
+                //     caloVetos[j] = caloDeps[j].veto();
                 
             }
             
             for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
                 ref = prevMuonRefs[j];
                 reco::TrackRef mu = ref->track();
-            //    reco::IsoDeposit trackDep = trkExtractor->deposit(iEvent, iSetup, *mu);
-            //    reco::IsoDeposit::Veto trkVeto = trackDep.veto();
+                //    reco::IsoDeposit trackDep = trkExtractor->deposit(iEvent, iSetup, *mu);
+                //    reco::IsoDeposit::Veto trkVeto = trackDep.veto();
                 float trkIso = trkDeps[j].depositWithin(0.3, trkVetos, -1.);
                 T_Trig_TkIsoVeto->push_back(trkIso);
-            //    float caloIsoSum = caloDeps[j].depositWithin(0.3, caloVetos);
-            //    cout << "caloIso=" << caloIsoSum << endl;
+                //    float caloIsoSum = caloDeps[j].depositWithin(0.3, caloVetos);
+                //    cout << "caloIso=" << caloIsoSum << endl;
                 T_Trig_Eta->push_back(ref->eta());
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
@@ -244,24 +244,24 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_rho->push_back(rho);
                 if (IsoTkMap.isValid()) {
                     reco::IsoDeposit theTkIsolation = (*IsoTkMap)[ref];
-                    T_Trig_Value->push_back(theTkIsolation.depositWithin(0.3));
+                    T_Trig_trackerIso->push_back(theTkIsolation.depositWithin(0.3));
                 }
-                else T_Trig_Value->push_back(-1);
+                else T_Trig_trackerIso->push_back(-1);
                 if (IsoCaloMap.isValid()){
                     reco::IsoDeposit theCaloIsolation = (*IsoCaloMap)[ref];
-                    T_Trig_Value2->push_back(theCaloIsolation.depositWithin(0.3));
+                    T_Trig_detBasedCALO->push_back(theCaloIsolation.depositWithin(0.3));
                 }
-                else T_Trig_Value2->push_back(-1);
+                else T_Trig_detBasedCALO->push_back(-1);
                 if (IsoCaloMapNoHCAL.isValid()){
                     reco::IsoDeposit theCaloIsolationNoHCAL = (*IsoCaloMapNoHCAL)[ref];
-                    T_Trig_Value_NoHCAL->push_back(theCaloIsolationNoHCAL.depositWithin(0.3));
+                    T_Trig_detBasedECAL->push_back(theCaloIsolationNoHCAL.depositWithin(0.3));
                 }
-                else T_Trig_Value_NoHCAL->push_back(-1);
+                else T_Trig_detBasedECAL->push_back(-1);
                 if (IsoCaloMapNoECAL.isValid()){
                     reco::IsoDeposit theCaloIsolationNoECAL = (*IsoCaloMapNoECAL)[ref];
-                    T_Trig_Value_NoECAL->push_back(theCaloIsolationNoECAL.depositWithin(0.3));
+                    T_Trig_detBasedHCAL->push_back(theCaloIsolationNoECAL.depositWithin(0.3));
                 }
-                else T_Trig_Value_NoECAL->push_back(-1);
+                else T_Trig_detBasedHCAL->push_back(-1);
                 
                 if (hcalIsoMap.isValid()){
                     reco::RecoChargedCandidateIsolationMap::const_iterator valHcalIso = (*hcalIsoMap).find(ref);
@@ -307,21 +307,21 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 T_Trig_Pt->push_back(ref->pt());
                 T_Trig_Phi->push_back(ref->phi());
                 T_Trig_Leg->push_back(i);
-                T_Trig_Value->push_back(-1);
-                T_Trig_Value2->push_back(-1);
+                T_Trig_trackerIso->push_back(-1);
+                T_Trig_detBasedCALO->push_back(-1);
                 T_Trig_rho->push_back(-1);
-                T_Trig_Value_NoHCAL->push_back(-1);
-                T_Trig_Value_NoECAL->push_back(-1);
+                T_Trig_detBasedECAL->push_back(-1);
+                T_Trig_detBasedHCAL->push_back(-1);
                 T_Trig_PFhcal->push_back(-1);
                 T_Trig_PFecal->push_back(-1);
                 T_Trig_PFhcalUnseeded->push_back(-1);
                 T_Trig_PFecalUnseeded->push_back(-1);
             }
         }
-    
+        
     }
     
-
+    
     
     
     
@@ -331,7 +331,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         const reco::GenParticle & genMuon = (*genParticles)[i];
         if ((fabs(genMuon.pdgId())!=13)&&(fabs(genMuon.pdgId())!=11)) continue;
         if (!(genMuon.status()==1)) continue;
-
+        
         const reco::Candidate  *MomPart =genMuon.mother();
         
         T_Gen_Eta->push_back(genMuon.eta());
@@ -342,21 +342,21 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         T_Gen_MotherID->push_back(MomPart->pdgId());
         T_Gen_FromW->push_back(hasWasMother(genMuon));
         T_Gen_FromTau->push_back(hasTauasMother(genMuon));
-       
+        
         
     }
     
     
-
+    
     mytree_->Fill();
     
     endEvent();
-
+    
 }
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void 
+void
 TriggerTest::beginJob()
 {
     mytree_ = new TTree("eventsTree","");
@@ -372,18 +372,18 @@ TriggerTest::beginJob()
     
     
     mytree_->Branch("T_Event_pathsFired", "std::vector<int>", &T_Event_pathsFired);
-  
+    
     mytree_->Branch("T_Trig_Eta", "std::vector<float>", &T_Trig_Eta);
     mytree_->Branch("T_Trig_Pt", "std::vector<float>", &T_Trig_Pt);
     mytree_->Branch("T_Trig_Phi", "std::vector<float>", &T_Trig_Phi);
     mytree_->Branch("T_Trig_Leg", "std::vector<int>", &T_Trig_Leg);
     mytree_->Branch("T_Trig_TkIsoVeto", "std::vector<float>", &T_Trig_TkIsoVeto);
-    mytree_->Branch("T_Trig_Value", "std::vector<float>", &T_Trig_Value);
-    mytree_->Branch("T_Trig_Value_NoECAL", "std::vector<float>", &T_Trig_Value_NoECAL);
-    mytree_->Branch("T_Trig_Value_NoHCAL", "std::vector<float>", &T_Trig_Value_NoHCAL);
-    mytree_->Branch("T_Trig_Value2", "std::vector<float>", &T_Trig_Value2);
-    mytree_->Branch("T_Trig_PFecal", "std::vector<float>", &T_Trig_PFecal);
-    mytree_->Branch("T_Trig_PFhcal", "std::vector<float>", &T_Trig_PFhcal);
+    mytree_->Branch("T_Trig_trackerIso", "std::vector<float>", &T_Trig_trackerIso);
+    mytree_->Branch("T_Trig_detBasedHCAL", "std::vector<float>", &T_Trig_detBasedHCAL);
+    mytree_->Branch("T_Trig_detBasedECAL", "std::vector<float>", &T_Trig_detBasedECAL);
+    mytree_->Branch("T_Trig_detBasedCALO", "std::vector<float>", &T_Trig_detBasedCALO);
+    // mytree_->Branch("T_Trig_PFecal", "std::vector<float>", &T_Trig_PFecal);
+    //mytree_->Branch("T_Trig_PFhcal", "std::vector<float>", &T_Trig_PFhcal);
     mytree_->Branch("T_Trig_PFecalUnseeded", "std::vector<float>", &T_Trig_PFecalUnseeded);
     mytree_->Branch("T_Trig_PFhcalUnseeded", "std::vector<float>", &T_Trig_PFhcalUnseeded);
     mytree_->Branch("T_Trig_rho", "std::vector<float>", &T_Trig_rho);
@@ -397,20 +397,20 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Gen_FromW", "std::vector<int>", &T_Gen_FromW);
     mytree_->Branch("T_Gen_FromTau", "std::vector<int>", &T_Gen_FromTau);
     
-   /* mytree_->Branch("T_Elec_Eta", "std::vector<float>", &T_Elec_Eta);
-    mytree_->Branch("T_Elec_Phi", "std::vector<float>", &T_Elec_Phi);
-    mytree_->Branch("T_Elec_Pt", "std::vector<float>", &T_Elec_Pt);
-
-    mytree_->Branch("T_Muon_Eta", "std::vector<float>", &T_Muon_Eta);
-    mytree_->Branch("T_Muon_Phi", "std::vector<float>", &T_Muon_Phi);
-    mytree_->Branch("T_Muon_Pt", "std::vector<float>", &T_Muon_Pt);*/
-
-
+    /* mytree_->Branch("T_Elec_Eta", "std::vector<float>", &T_Elec_Eta);
+     mytree_->Branch("T_Elec_Phi", "std::vector<float>", &T_Elec_Phi);
+     mytree_->Branch("T_Elec_Pt", "std::vector<float>", &T_Elec_Pt);
+     
+     mytree_->Branch("T_Muon_Eta", "std::vector<float>", &T_Muon_Eta);
+     mytree_->Branch("T_Muon_Phi", "std::vector<float>", &T_Muon_Phi);
+     mytree_->Branch("T_Muon_Pt", "std::vector<float>", &T_Muon_Pt);*/
+    
+    
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void 
-TriggerTest::endJob() 
+void
+TriggerTest::endJob()
 {
     rootFile_->Write();
     rootFile_->Close();
@@ -426,10 +426,10 @@ TriggerTest::beginEvent()
     T_Trig_Phi = new std::vector<float>;
     T_Trig_Leg = new std::vector<int>;
     T_Trig_TkIsoVeto = new std::vector<float>;
-    T_Trig_Value = new std::vector<float>;
-    T_Trig_Value_NoECAL = new std::vector<float>;
-    T_Trig_Value_NoHCAL = new std::vector<float>;
-    T_Trig_Value2 = new std::vector<float>;
+    T_Trig_trackerIso = new std::vector<float>;
+    T_Trig_detBasedHCAL = new std::vector<float>;
+    T_Trig_detBasedECAL = new std::vector<float>;
+    T_Trig_detBasedCALO = new std::vector<float>;
     T_Trig_PFecal = new std::vector<float>;
     T_Trig_PFhcal = new std::vector<float>;
     T_Trig_PFecalUnseeded = new std::vector<float>;
@@ -443,15 +443,15 @@ TriggerTest::beginEvent()
     T_Gen_MotherID = new std::vector<int>;
     T_Gen_FromW = new std::vector<int>;
     T_Gen_FromTau = new std::vector<int>;
-
-   /* T_Elec_Eta = new std::vector<float>;
-    T_Elec_Phi = new std::vector<float>;
-    T_Elec_Pt = new std::vector<float>;
     
-    T_Muon_Eta = new std::vector<float>;
-    T_Muon_Phi = new std::vector<float>;
-    T_Muon_Pt = new std::vector<float>;*/
-
+    /* T_Elec_Eta = new std::vector<float>;
+     T_Elec_Phi = new std::vector<float>;
+     T_Elec_Pt = new std::vector<float>;
+     
+     T_Muon_Eta = new std::vector<float>;
+     T_Muon_Phi = new std::vector<float>;
+     T_Muon_Pt = new std::vector<float>;*/
+    
 }
 
 void
@@ -464,10 +464,10 @@ TriggerTest::endEvent()
     delete T_Trig_Phi;
     delete T_Trig_Leg;
     delete T_Trig_TkIsoVeto;
-    delete T_Trig_Value;
-    delete T_Trig_Value_NoECAL;
-    delete T_Trig_Value_NoHCAL;
-    delete T_Trig_Value2;
+    delete T_Trig_trackerIso;
+    delete T_Trig_detBasedHCAL;
+    delete T_Trig_detBasedECAL;
+    delete T_Trig_detBasedCALO;
     delete T_Trig_PFecal;
     delete T_Trig_PFhcal;
     delete T_Trig_PFecalUnseeded;
@@ -481,54 +481,54 @@ TriggerTest::endEvent()
     delete T_Gen_MotherID;
     delete T_Gen_FromW;
     delete T_Gen_FromTau;
-
-   /* delete T_Muon_Eta;
-    delete T_Muon_Phi;
-    delete T_Muon_Pt;
-
     
-    delete T_Elec_Eta;
-    delete T_Elec_Phi;
-    delete T_Elec_Pt;*/
-
+    /* delete T_Muon_Eta;
+     delete T_Muon_Phi;
+     delete T_Muon_Pt;
+     
+     
+     delete T_Elec_Eta;
+     delete T_Elec_Phi;
+     delete T_Elec_Pt;*/
+    
 }
 
 // ------------ method called when starting to processes a run  ------------
 /*
-void 
-TriggerTest::beginRun(edm::Run const&, edm::EventSetup const&)
-{
-}
-*/
+ void
+ TriggerTest::beginRun(edm::Run const&, edm::EventSetup const&)
+ {
+ }
+ */
 
 // ------------ method called when ending the processing of a run  ------------
 /*
-void 
-TriggerTest::endRun(edm::Run const&, edm::EventSetup const&)
-{
-}
-*/
+ void
+ TriggerTest::endRun(edm::Run const&, edm::EventSetup const&)
+ {
+ }
+ */
 
 // ------------ method called when starting to processes a luminosity block  ------------
 /*
-void 
-TriggerTest::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
-{
-}
-*/
+ void
+ TriggerTest::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+ {
+ }
+ */
 
 // ------------ method called when ending the processing of a luminosity block  ------------
 /*
-void 
-TriggerTest::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
-{
-}
-*/
+ void
+ TriggerTest::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+ {
+ }
+ */
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
 TriggerTest::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-
+    
     
 }
 

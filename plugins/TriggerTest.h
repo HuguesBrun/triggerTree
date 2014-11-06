@@ -182,10 +182,10 @@ class TriggerTest : public edm::EDAnalyzer {
     std::vector<float> *T_Trig_Phi;
     std::vector<int> *T_Trig_Leg;
     std::vector<float> *T_Trig_TkIsoVeto;
-    std::vector<float> *T_Trig_Value;
-    std::vector<float> *T_Trig_Value_NoECAL;
-    std::vector<float> *T_Trig_Value_NoHCAL;
-    std::vector<float> *T_Trig_Value2;
+    std::vector<float> *T_Trig_trackerIso;
+    std::vector<float> *T_Trig_detBasedHCAL;
+    std::vector<float> *T_Trig_detBasedECAL;
+    std::vector<float> *T_Trig_detBasedCALO;
     std::vector<float> *T_Trig_PFecal;
     std::vector<float> *T_Trig_PFhcal;
     std::vector<float> *T_Trig_PFecalUnseeded;
