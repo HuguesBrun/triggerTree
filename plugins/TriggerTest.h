@@ -76,6 +76,9 @@
 #include "DataFormats/RecoCandidate/interface/IsoDeposit.h"
 #include "DataFormats/RecoCandidate/interface/IsoDepositFwd.h"
 
+#include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
+
+
 
 // root stuff !
 #include "TH1D.h"
@@ -155,6 +158,8 @@ class TriggerTest : public edm::EDAnalyzer {
     int T_Event_nPUm;
     int T_Event_nPUp;
     float T_Event_AveNTruePU;
+    
+    int antiMuEnrichementVeto;
     
     std::vector<int> *T_Event_pathsFired;
     

@@ -62,6 +62,16 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     T_Event_EventNumber = iEvent.id().event();
     T_Event_LuminosityBlock = iEvent.id().luminosityBlock();
     
+    
+    edm::InputTag trackingParticlesTag = edm::InputTag("mix","MergedTrackTruth");
+    
+    edm::Handle<TrackingParticleCollection>  TPCollectionH ;
+    TrackingParticleCollection tPC;
+    iEvent.getByLabel(trackingParticlesTag,TPCollectionH);
+    if (TPCollectionH.isValid()) tPC   = *(TPCollectionH.product());
+    else cout << "not found tracking particles collection" << endl;
+    
+    
    // cout << "event=" << T_Event_EventNumber << endl;
     
     float truePu=0.;
@@ -204,9 +214,27 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         
         T_Muon_Eta->push_back(muon->eta());
         T_Muon_Phi->push_back(muon->phi());
-        T_Muon_Pt->push_back(muon->pt());
+        T_Muon_Pt->push_back(muon->pt());*/
+   
+   //starting loop on tracking particles
     
-    }*/
+    bool needToVeto = false;
+   for (TrackingParticleCollection::size_type i=0; i<tPC.size(); i++) {
+   TrackingParticleRef trpart(TPCollectionH, i);
+   
+      /* cout << "tp eta=" << trpart->eta() << endl;
+       cout << "tp phi=" << trpart->phi() << endl;
+       
+       cout << "tp pT=" << trpart->pt() << "pdgID=" << trpart->pdgId() << " vx=" << trpart->vx() << " vy=" << trpart->vy() << endl;*/
+       if (fabs(trpart->pdgId())!=13) continue;
+       float rhoVtx = sqrt(pow(trpart->vx(),2)+pow(trpart->vy(),2));
+       float zVtx = fabs(trpart->vz());
+       if ((trpart->pt()>5)&&(fabs(trpart->eta())<2.5)&&(rhoVtx<2000)&&(zVtx<4000)) needToVeto = true;
+   }
+    
+    antiMuEnrichementVeto = needToVeto;
+   
+ 
     mytree_->Fill();
     
     endEvent();
@@ -229,7 +257,8 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Event_nPUp", &T_Event_nPUp, "T_Event_nPUp/I");
     mytree_->Branch("T_Event_AveNTruePU", &T_Event_AveNTruePU, "T_Event_AveNTruePU/F");
     
-    
+    mytree_->Branch("antiMuEnrichementVeto", &antiMuEnrichementVeto, "antiMuEnrichementVeto/I");
+
     mytree_->Branch("T_Event_pathsFired", "std::vector<int>", &T_Event_pathsFired);
   
     mytree_->Branch("T_Trig_Eta", "std::vector<float>", &T_Trig_Eta);

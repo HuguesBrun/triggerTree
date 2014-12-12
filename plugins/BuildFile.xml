@@ -13,5 +13,10 @@
  <use   name="DataFormats/MuonReco"/>
  <use   name="DataFormats/RecoCandidate"/>
  <use   name="DataFormats/TrackReco"/>
-
+<use   name="SimDataFormats/Track"/>
+<use   name="SimDataFormats/TrackingHit"/>
+<use   name="SimDataFormats/TrackerDigiSimLink"/>
+<use   name="SimDataFormats/DigiSimLinks"/>
+<use   name="SimTracker/TrackerHitAssociation"/>
+<use   name="SimDataFormats/TrackingAnalysis"/>
 <flags EDM_PLUGIN="1"/>
