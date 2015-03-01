@@ -15,7 +15,7 @@ process.source = cms.Source("PoolSource",
                             # replace 'myfile.root' with the source file you want to use
                             fileNames = cms.untracked.vstring(
                                                               #'file:/tmp/hbrun/theMuEnrichedFile.root'
-                                                              'file:/tmp/hbrun/theDYRaw.root'
+                                                              'file:/tmp/hbrun/5.4_ZEE+ZEEFS+HARVESTFS/step1.root'
                                                               )
                             )
 
@@ -24,45 +24,17 @@ process.GlobalTag.globaltag = 'PRE_LS171V9A::All'
 
 
 process.triggerTestProducer = cms.EDAnalyzer('TriggerTest',
-            triggerResultTag     = cms.InputTag("TriggerResults", "", "TEST"),
-            triggerSummaryTag    = cms.InputTag("hltTriggerSummaryAOD", "", "TEST"),
-            pathsToSave           =cms.vstring("HLT_IsoMu24_v", "HLT_Mu24_v","HLT_Mu17_v"),
-            filterToMatch           =cms.vstring("hltL1sL1Mu12EG7",
-                                                 "hltL1Mu12EG7L1MuFiltered0",
-                                                 "hltL1Mu12EG7L3MuFiltered17",
-                                                 "hltEG8EtFilterL1Mu12EG7",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLClusterShapeFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLEcalIsoFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLHEFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLHcalIsoFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLPixelMatchFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLOneOEMinusOneOPFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLDetaFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLDphiFilter",
-                                                 "hltMu17Ele8CaloIdTCaloIsoVLTrkIdVLTrkIsoVLTrackIsoFilter"),
-            mapsValues            = cms.vstring("hltL1SeededHLTClusterShape",
-                                                "hltL1SeededPhotonEcalIso",
-                                                "hltL1SeededPhotonHcalForHE",
-                                                "hltL1SeededPhotonHcalIso",
-                                                "hltL1SeededStartUpElectronPixelSeeds",
-                                                "hltPixelMatch3HitElectronsL1Seeded",
-                                                "hlt3HitElectronL1SeededDetaDphi",
-                                                "",
-                                                "hltL1Seeded3HitElectronTrackIso",
-                                                "",
-                                                "hltActivityPhotonClusterShape",
-                                                "hltActivityPhotonEcalIso",
-                                                "hltActivityPhotonHcalForHE",
-                                                "hltActivityPhotonHcalIso",
-                                                "hltActivityStartUpElectronPixelSeeds",
-                                                "hltPixelMatch3HitElectronsActivity",
-                                                "hlt3HitElectronActivityDetaDphi",
-                                                "",
-                                                "hlt3HitElectronActivityTrackIso",
-                                                "",
-                                                ""
-                                                ),
-            HLTprocess            = cms.string("TEST"),
+            triggerResultTag     = cms.InputTag("TriggerResults", "", "HLT"),
+            triggerSummaryTag    = cms.InputTag("hltTriggerSummaryAOD", "", "HLT"),
+            pathsToSave           =cms.vstring("HLT_Mu17_Mu8_v"),
+            filterToMatch           =cms.vstring("hltL1sL1DoubleMu10MuOpenORDoubleMu103p5",
+                                                 "hltL2pfL1DoubleMu10MuOpenOR3p5L1f0L2PreFiltered0",
+                                                 "hltL2fL1DoubleMu10MuOpenOR3p5L1f0L2Filtered10",
+                                                 "hltL3pfL1DoubleMu10MuOpenOR3p5L1f0L2pf0L3PreFiltered8",
+                                                 "hltL3fL1DoubleMu10MuOpenOR3p5L1f0L2f10L3Filtered17",
+                                                 "hltDiMuonGlb17Glb8DzFiltered0p2"),
+            mapsValues            = cms.vstring(),
+            HLTprocess            = cms.string("HLT"),
             outputFile		        = cms.string("triggerTree.root")
 )
 

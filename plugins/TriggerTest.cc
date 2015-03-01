@@ -53,9 +53,9 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     /* edm::Handle<reco::GsfElectronCollection> electronsCollection;
      iEvent.getByLabel(electronsCollection_ , electronsCollection);
+     */
      
-     
-     edm::Handle < std::vector <reco::Muon> > recoMuons;
+     /*edm::Handle < std::vector <reco::Muon> > recoMuons;
      iEvent.getByLabel(muonsCollection_, recoMuons);*/
     
     edm::Handle<GenEventInfoProduct> genEvent;
@@ -68,6 +68,18 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     T_Event_RunNumber = iEvent.id().run();
     T_Event_EventNumber = iEvent.id().event();
     T_Event_LuminosityBlock = iEvent.id().luminosityBlock();
+    
+    
+    edm::InputTag trackingParticlesTag = edm::InputTag("mix","MergedTrackTruth");
+    
+    edm::Handle<TrackingParticleCollection>  TPCollectionH ;
+    TrackingParticleCollection tPC;
+    iEvent.getByLabel(trackingParticlesTag,TPCollectionH);
+    if (TPCollectionH.isValid()) tPC   = *(TPCollectionH.product());
+    else cout << "not found tracking particles collection" << endl;
+    
+    
+   // cout << "event=" << T_Event_EventNumber << endl;
     
     float truePu=0.;
     Handle<std::vector< PileupSummaryInfo > > puInfo;
@@ -107,7 +119,8 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         std::cout << "the curent menu is " << hltConfig.tableName() << std::endl;
         for (unsigned int itePath=0 ; itePath<nbPaths ; itePath++){
             for (size_t j = 0; j < hltConfig.triggerNames().size(); j++) {
-                if (TString(hltConfig.triggerNames()[j]).Contains(pathsToSave_.at(itePath))){
+                //if (TString(hltConfig.triggerNames()[j]).Contains(pathsToSave_.at(itePath))){
+                if (TString(hltConfig.triggerNames()[j]) == pathsToSave_.at(itePath)){
                     triggerBits_.push_back(j);
                     cout << "found the path " << pathsToSave_.at(itePath) << endl;
                 }
@@ -151,7 +164,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         size_t filterIndex = (*triggerSummary).filterIndex(filterTag);
         if (filterIndex < (*triggerSummary).sizeFilters()) { //check if the trigger object is present
             //save the trigger objects corresponding to muon leg
-            //cout << "found the filter " << filterToMatch_.at(iteFilter) << endl;
+        //    cout << "found the filter " << filterToMatch_.at(iteFilter) << endl;
             const trigger::Keys &keys = (*triggerSummary).filterKeys(filterIndex);
             for (size_t j = 0; j < keys.size(); j++) {
                 trigger::TriggerObject foundObject = (allTriggerObjects)[keys[j]];
@@ -325,6 +338,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     
     
+
     
     int theNbOfGen = genParticles->size();
     for (int i=0 ; i < theNbOfGen; i++){
@@ -338,6 +352,13 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         T_Gen_Phi->push_back(genMuon.phi());
         T_Gen_Pt->push_back(genMuon.pt());
         
+        T_Gen_Px->push_back(genMuon.px());
+        T_Gen_Py->push_back(genMuon.py());
+        T_Gen_Pz->push_back(genMuon.pz());
+        T_Gen_Energy->push_back(genMuon.energy());
+
+        
+        
         T_Gen_pdgID->push_back(genMuon.pdgId());
         T_Gen_MotherID->push_back(MomPart->pdgId());
         T_Gen_FromW->push_back(hasWasMother(genMuon));
@@ -348,6 +369,27 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     
     
+
+   
+   //starting loop on tracking particles
+    
+    bool needToVeto = false;
+   for (TrackingParticleCollection::size_type i=0; i<tPC.size(); i++) {
+   TrackingParticleRef trpart(TPCollectionH, i);
+   
+      /* cout << "tp eta=" << trpart->eta() << endl;
+       cout << "tp phi=" << trpart->phi() << endl;
+       
+       cout << "tp pT=" << trpart->pt() << "pdgID=" << trpart->pdgId() << " vx=" << trpart->vx() << " vy=" << trpart->vy() << endl;*/
+       if (fabs(trpart->pdgId())!=13) continue;
+       float rhoVtx = sqrt(pow(trpart->vx(),2)+pow(trpart->vy(),2));
+       float zVtx = fabs(trpart->vz());
+       if ((trpart->pt()>5)&&(fabs(trpart->eta())<2.5)&&(rhoVtx<2000)&&(zVtx<4000)) needToVeto = true;
+   }
+    
+    antiMuEnrichementVeto = needToVeto;
+   
+ 
     mytree_->Fill();
     
     endEvent();
@@ -370,7 +412,8 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Event_nPUp", &T_Event_nPUp, "T_Event_nPUp/I");
     mytree_->Branch("T_Event_AveNTruePU", &T_Event_AveNTruePU, "T_Event_AveNTruePU/F");
     
-    
+    mytree_->Branch("antiMuEnrichementVeto", &antiMuEnrichementVeto, "antiMuEnrichementVeto/I");
+
     mytree_->Branch("T_Event_pathsFired", "std::vector<int>", &T_Event_pathsFired);
     
     mytree_->Branch("T_Trig_Eta", "std::vector<float>", &T_Trig_Eta);
@@ -392,6 +435,11 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Gen_Eta", "std::vector<float>", &T_Gen_Eta);
     mytree_->Branch("T_Gen_Phi", "std::vector<float>", &T_Gen_Phi);
     mytree_->Branch("T_Gen_Pt", "std::vector<float>", &T_Gen_Pt);
+    mytree_->Branch("T_Gen_Px", "std::vector<float>", &T_Gen_Px);
+    mytree_->Branch("T_Gen_Py", "std::vector<float>", &T_Gen_Py);
+    mytree_->Branch("T_Gen_Pz", "std::vector<float>", &T_Gen_Pz);
+    mytree_->Branch("T_Gen_Energy", "std::vector<float>", &T_Gen_Energy);
+    
     mytree_->Branch("T_Gen_pdgID", "std::vector<int>", &T_Gen_pdgID);
     mytree_->Branch("T_Gen_MotherID", "std::vector<int>", &T_Gen_MotherID);
     mytree_->Branch("T_Gen_FromW", "std::vector<int>", &T_Gen_FromW);
@@ -439,6 +487,10 @@ TriggerTest::beginEvent()
     T_Gen_Eta = new std::vector<float>;
     T_Gen_Phi = new std::vector<float>;
     T_Gen_Pt = new std::vector<float>;
+    T_Gen_Px = new std::vector<float>;
+    T_Gen_Py = new std::vector<float>;
+    T_Gen_Pz = new std::vector<float>;
+    T_Gen_Energy = new std::vector<float>;
     T_Gen_pdgID = new std::vector<int>;
     T_Gen_MotherID = new std::vector<int>;
     T_Gen_FromW = new std::vector<int>;
@@ -477,6 +529,11 @@ TriggerTest::endEvent()
     delete T_Gen_Eta;
     delete T_Gen_Phi;
     delete T_Gen_Pt;
+    delete T_Gen_Px;
+    delete T_Gen_Py;
+    delete T_Gen_Pz;
+    delete T_Gen_Energy;
+    
     delete T_Gen_pdgID;
     delete T_Gen_MotherID;
     delete T_Gen_FromW;
