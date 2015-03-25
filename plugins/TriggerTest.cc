@@ -136,7 +136,8 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     for (unsigned int itePath = 0 ; itePath < triggerBits_.size() ; itePath++){
         if (triggerResults->accept(triggerBits_.at(itePath))) {
-            edm::LogVerbatim("TriggerTest") << "passing path " << itePath << endl;
+            //edm::LogVerbatim("TriggerTest") << "passing path " << itePath << endl;
+//	    cout  << "passing path " << itePath << endl;
             T_Event_pathsFired->push_back(1);
         }
         else T_Event_pathsFired->push_back(0);
@@ -195,28 +196,28 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         TString nameOfFilter = filterToMatch_.at(i);
         
         
-        if (nameOfFilter.Contains("hltL3fL1sMu16L1f0L2f16QL3Filtered24Q")){
+        if (nameOfFilter.Contains("hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q")){
             std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
             reco::RecoChargedCandidateRef ref;
             hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
-            edm::Handle<reco::IsoDepositMap> IsoCaloMap;
+            edm::Handle< edm::ValueMap<float> > IsoCaloMap;
             iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolations","",HLTprocess_.c_str()),IsoCaloMap);
-            edm::Handle<reco::IsoDepositMap> IsoCaloMapNoECAL;
-            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsNoECAL","",HLTprocess_.c_str()),IsoCaloMapNoECAL);
-            edm::Handle<reco::IsoDepositMap> IsoCaloMapNoHCAL;
-            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsNoHCAL","",HLTprocess_.c_str()),IsoCaloMapNoHCAL);
+            edm::Handle< edm::ValueMap<float> > IsoCaloMapECAL;
+            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsECAL","",HLTprocess_.c_str()),IsoCaloMapECAL);
+            edm::Handle< edm::ValueMap<float> > IsoCaloMapHCAL;
+            iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsHCAL","",HLTprocess_.c_str()),IsoCaloMapHCAL);
             
             edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMap;
-            iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIso","",HLTprocess_.c_str()),hcalIsoMap);
+            iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),hcalIsoMap);
             
             edm::Handle<reco::RecoChargedCandidateIsolationMap> ecalIsoMap;
-            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIso","",HLTprocess_.c_str()),ecalIsoMap);
+            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),ecalIsoMap);
             
-            edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMapUnSeeded;
+            /*edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMapUnSeeded;
             iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),hcalIsoMapUnSeeded);
             
             edm::Handle<reco::RecoChargedCandidateIsolationMap> ecalIsoMapUnSeeded;
-            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),ecalIsoMapUnSeeded);
+            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),ecalIsoMapUnSeeded);*/
             
             edm::Handle<reco::IsoDepositMap> IsoTkMap;
             iEvent.getByLabel(edm::InputTag("hltL3MuonCombRelIsolationsIterTrkRegIter02","trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
@@ -244,7 +245,8 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 ref = prevMuonRefs[j];
                 reco::TrackRef mu = ref->track();
                 //    reco::IsoDeposit trackDep = trkExtractor->deposit(iEvent, iSetup, *mu);
-                //    reco::IsoDeposit::Veto trkVeto = trackDep.veto();
+                //    reco::IsoDeposit::Vet$i trkVeto = trackDep.veto();
+                //   
                 float trkIso = trkDeps[j].depositWithin(0.3, trkVetos, -1.);
                 T_Trig_TkIsoVeto->push_back(trkIso);
                 //    float caloIsoSum = caloDeps[j].depositWithin(0.3, caloVetos);
@@ -260,21 +262,25 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     T_Trig_trackerIso->push_back(theTkIsolation.depositWithin(0.3));
                 }
                 else T_Trig_trackerIso->push_back(-1);
+		//float myIsoCalo = -1;
                 if (IsoCaloMap.isValid()){
-                    reco::IsoDeposit theCaloIsolation = (*IsoCaloMap)[ref];
-                    T_Trig_detBasedCALO->push_back(theCaloIsolation.depositWithin(0.3));
+                    float theCaloIsolation = (*IsoCaloMap)[ref];
+                    T_Trig_detBasedCALO->push_back(theCaloIsolation);
+     		  //  myIsoCalo = (theCaloIsolation>0 ? theCaloIsolation : 0);
                 }
                 else T_Trig_detBasedCALO->push_back(-1);
-                if (IsoCaloMapNoHCAL.isValid()){
-                    reco::IsoDeposit theCaloIsolationNoHCAL = (*IsoCaloMapNoHCAL)[ref];
-                    T_Trig_detBasedECAL->push_back(theCaloIsolationNoHCAL.depositWithin(0.3));
-                }
-                else T_Trig_detBasedECAL->push_back(-1);
-                if (IsoCaloMapNoECAL.isValid()){
-                    reco::IsoDeposit theCaloIsolationNoECAL = (*IsoCaloMapNoECAL)[ref];
-                    T_Trig_detBasedHCAL->push_back(theCaloIsolationNoECAL.depositWithin(0.3));
+   		//cout << "eta=" << ref->eta() << " phi=" << ref->phi() << " trkIso=" << trkIso << " caloIso=" << myIsoCalo  << "pt=" << ref->pt() << endl;
+		//cout << "comb=" << ((trkIso+myIsoCalo)/ref->pt()) << " pass=" << ((trkIso+myIsoCalo)/ref->pt()<0.15) << endl;
+                if (IsoCaloMapHCAL.isValid()){
+                    float theCaloIsolationHCAL = (*IsoCaloMapHCAL)[ref];
+                    T_Trig_detBasedHCAL->push_back(theCaloIsolationHCAL);
                 }
                 else T_Trig_detBasedHCAL->push_back(-1);
+                if (IsoCaloMapECAL.isValid()){
+                    float theCaloIsolationECAL = (*IsoCaloMapECAL)[ref];
+                    T_Trig_detBasedECAL->push_back(theCaloIsolationECAL);
+                }
+                else T_Trig_detBasedECAL->push_back(-1);
                 
                 if (hcalIsoMap.isValid()){
                     reco::RecoChargedCandidateIsolationMap::const_iterator valHcalIso = (*hcalIsoMap).find(ref);
@@ -287,7 +293,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 }
                 else T_Trig_PFecal->push_back(-1.);
                 
-                if (hcalIsoMapUnSeeded.isValid()){
+                /*if (hcalIsoMapUnSeeded.isValid()){
                     reco::RecoChargedCandidateIsolationMap::const_iterator valHcalIsoUnSeeded = (*hcalIsoMapUnSeeded).find(ref);
                     T_Trig_PFhcalUnseeded->push_back(valHcalIsoUnSeeded->val);
                 }
@@ -296,7 +302,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     reco::RecoChargedCandidateIsolationMap::const_iterator valEcalIsoUnSeeded = (*ecalIsoMapUnSeeded).find(ref);
                     T_Trig_PFecalUnseeded->push_back(valEcalIsoUnSeeded->val);
                 }
-                else T_Trig_PFecalUnseeded->push_back(-1.);
+                else T_Trig_PFecalUnseeded->push_back(-1.);*/
                 
             }
         }
@@ -304,12 +310,22 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
             reco::RecoChargedCandidateRef ref;
             hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
-            cout << "nb of candidates =" << prevMuonRefs.size() << endl;
+            //cout << "nb of candidates =" << prevMuonRefs.size() << endl;
             for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
                 ref = prevMuonRefs[j];
             }
             
         }
+	else if (nameOfFilter.Contains("hltL3crIsoL1sMu20Eta2p1L1f0L2f10QL3f24QL3crIsoRhoFiltered0p15IterTrk02")){
+	    std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
+            reco::RecoChargedCandidateRef ref;
+            hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
+            //cout << "pass the isolation=" << endl;
+            for (size_t j = 0 ; j < prevMuonRefs.size() ; j++){
+                ref = prevMuonRefs[j];
+		//cout << "eta=" << ref->eta() << " phi=" << ref->phi() << endl;
+            }
+	}
         else {
             std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
             reco::RecoChargedCandidateRef ref;
@@ -425,10 +441,10 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Trig_detBasedHCAL", "std::vector<float>", &T_Trig_detBasedHCAL);
     mytree_->Branch("T_Trig_detBasedECAL", "std::vector<float>", &T_Trig_detBasedECAL);
     mytree_->Branch("T_Trig_detBasedCALO", "std::vector<float>", &T_Trig_detBasedCALO);
-    // mytree_->Branch("T_Trig_PFecal", "std::vector<float>", &T_Trig_PFecal);
-    //mytree_->Branch("T_Trig_PFhcal", "std::vector<float>", &T_Trig_PFhcal);
-    mytree_->Branch("T_Trig_PFecalUnseeded", "std::vector<float>", &T_Trig_PFecalUnseeded);
-    mytree_->Branch("T_Trig_PFhcalUnseeded", "std::vector<float>", &T_Trig_PFhcalUnseeded);
+    mytree_->Branch("T_Trig_PFecal", "std::vector<float>", &T_Trig_PFecal);
+    mytree_->Branch("T_Trig_PFhcal", "std::vector<float>", &T_Trig_PFhcal);
+    //mytree_->Branch("T_Trig_PFecalUnseeded", "std::vector<float>", &T_Trig_PFecalUnseeded);
+    //mytree_->Branch("T_Trig_PFhcalUnseeded", "std::vector<float>", &T_Trig_PFhcalUnseeded);
     mytree_->Branch("T_Trig_rho", "std::vector<float>", &T_Trig_rho);
     
     
