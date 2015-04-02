@@ -196,7 +196,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         TString nameOfFilter = filterToMatch_.at(i);
         
         
-        if (nameOfFilter.Contains("hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q")){
+        if (nameOfFilter.Contains("hltL3fL1sMu16L1f0L2f10QL3Filtered20Q")){
             std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
             reco::RecoChargedCandidateRef ref;
             hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
@@ -208,10 +208,10 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             iEvent.getByLabel(edm::InputTag("hltL3CaloMuonCorrectedIsolationsHCAL","",HLTprocess_.c_str()),IsoCaloMapHCAL);
             
             edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMap;
-            iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),hcalIsoMap);
+            iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIsoForMuons","",HLTprocess_.c_str()),hcalIsoMap);
             
             edm::Handle<reco::RecoChargedCandidateIsolationMap> ecalIsoMap;
-            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),ecalIsoMap);
+            iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoForMuons","",HLTprocess_.c_str()),ecalIsoMap);
             
             /*edm::Handle<reco::RecoChargedCandidateIsolationMap> hcalIsoMapUnSeeded;
             iEvent.getByLabel(edm::InputTag("hltMuonHcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),hcalIsoMapUnSeeded);
@@ -220,7 +220,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             iEvent.getByLabel(edm::InputTag("hltMuonEcalPFClusterIsoUnseeded","",HLTprocess_.c_str()),ecalIsoMapUnSeeded);*/
             
             edm::Handle<reco::IsoDepositMap> IsoTkMap;
-            iEvent.getByLabel(edm::InputTag("hltL3MuonCombRelIsolationsIterTrkRegIter02","trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
+            iEvent.getByLabel(edm::InputTag("hltMuonTkRelIsolationCut0p09Map","trkIsoDeposits",HLTprocess_.c_str()),IsoTkMap);
             
             unsigned int nMuons = prevMuonRefs.size();
             
@@ -316,7 +316,7 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             }
             
         }
-	else if (nameOfFilter.Contains("hltL3crIsoL1sMu20Eta2p1L1f0L2f10QL3f24QL3crIsoRhoFiltered0p15IterTrk02")){
+	else if (nameOfFilter.Contains("hltL3crIsoL1sMu16L1f0L2f10QL3f20QL3trkIsoFiltered0p09")){
 	    std::vector<reco::RecoChargedCandidateRef> prevMuonRefs;
             reco::RecoChargedCandidateRef ref;
             hltFilters[i]->getObjects(trigger::TriggerMuon, prevMuonRefs);
@@ -438,9 +438,9 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Trig_Leg", "std::vector<int>", &T_Trig_Leg);
     mytree_->Branch("T_Trig_TkIsoVeto", "std::vector<float>", &T_Trig_TkIsoVeto);
     mytree_->Branch("T_Trig_trackerIso", "std::vector<float>", &T_Trig_trackerIso);
-    mytree_->Branch("T_Trig_detBasedHCAL", "std::vector<float>", &T_Trig_detBasedHCAL);
-    mytree_->Branch("T_Trig_detBasedECAL", "std::vector<float>", &T_Trig_detBasedECAL);
-    mytree_->Branch("T_Trig_detBasedCALO", "std::vector<float>", &T_Trig_detBasedCALO);
+  //  mytree_->Branch("T_Trig_detBasedHCAL", "std::vector<float>", &T_Trig_detBasedHCAL);
+   // mytree_->Branch("T_Trig_detBasedECAL", "std::vector<float>", &T_Trig_detBasedECAL);
+  //  mytree_->Branch("T_Trig_detBasedCALO", "std::vector<float>", &T_Trig_detBasedCALO);
     mytree_->Branch("T_Trig_PFecal", "std::vector<float>", &T_Trig_PFecal);
     mytree_->Branch("T_Trig_PFhcal", "std::vector<float>", &T_Trig_PFhcal);
     //mytree_->Branch("T_Trig_PFecalUnseeded", "std::vector<float>", &T_Trig_PFecalUnseeded);
