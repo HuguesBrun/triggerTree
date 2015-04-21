@@ -19,6 +19,12 @@ TriggerTest::TriggerTest(const edm::ParameterSet& iConfig)
     rhoTag_ = iConfig.getParameter<edm::InputTag>("rhoTag");
     outputFile_   = iConfig.getParameter<std::string>("outputFile");
     trkExtractorPSet_ = iConfig.getParameter<edm::ParameterSet>("TrkExtractorPSet");
+    primaryVertexInputTag_    = iConfig.getParameter<edm::InputTag>("primaryVertexInputTag");
+    doMuon_                   = iConfig.getParameter<bool>("doMuon");
+    muonProducers_			= iConfig.getParameter<vtag>("muonProducer");
+    muonECALpfIsoTag_       = iConfig.getParameter<edm::InputTag>("muonECALpfIsoTag");
+    muonHCALpfIsoTag_       = iConfig.getParameter<edm::InputTag>("muonHCALpfIsoTag");
+    rhoInputTags_           = iConfig.getParameter<std::vector<edm::InputTag> >("rhoTags");
     // caloExtractorPSet_ = iConfig.getParameter<edm::ParameterSet>("CaloExtractorPSet");
     rootFile_ = TFile::Open(outputFile_.c_str(),"RECREATE");
     
@@ -55,8 +61,6 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
      iEvent.getByLabel(electronsCollection_ , electronsCollection);
      */
      
-     /*edm::Handle < std::vector <reco::Muon> > recoMuons;
-     iEvent.getByLabel(muonsCollection_, recoMuons);*/
     
     edm::Handle<GenEventInfoProduct> genEvent;
     iEvent.getByLabel("generator", genEvent);
@@ -64,6 +68,27 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     
     edm::Handle<reco::GenParticleCollection> genParticles;
     iEvent.getByLabel( "genParticles", genParticles );
+    
+    // load the vertices collection
+    edm::Handle<reco::VertexCollection> vtx_h;
+    iEvent.getByLabel(primaryVertexInputTag_, vtx_h);
+    
+    //muon collection :
+    edm::Handle < std::vector <reco::Muon> > recoMuons;
+    edm::InputTag muonProducer = muonProducers_.at(0);
+    iEvent.getByLabel(muonProducer, recoMuons);
+    
+    // muon PF clustering isolation
+
+    edm::Handle< edm::ValueMap<float> > muonECALIsoMapH;
+    iEvent.getByLabel(muonECALpfIsoTag_,muonECALIsoMapH);
+    const edm::ValueMap<float> muonECALIsoMap  = *(muonECALIsoMapH);
+    
+    edm::Handle< edm::ValueMap<float> > muonHCALIsoMapH;
+    iEvent.getByLabel(muonHCALpfIsoTag_,muonHCALIsoMapH);
+    const edm::ValueMap<float> muonHCALIsoMap  = *(muonHCALIsoMapH);
+    
+
     
     T_Event_RunNumber = iEvent.id().run();
     T_Event_EventNumber = iEvent.id().event();
@@ -77,6 +102,20 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByLabel(trackingParticlesTag,TPCollectionH);
     if (TPCollectionH.isValid()) tPC   = *(TPCollectionH.product());
     else cout << "not found tracking particles collection" << endl;
+    
+    
+    reco::Vertex dummy;
+    const reco::Vertex *pv = &dummy;
+    if (vtx_h->size() != 0) {
+        pv = &*vtx_h->begin();
+    } else { // create a dummy PV
+        reco::Vertex::Error e;
+        e(0, 0) = 0.0015 * 0.0015;
+        e(1, 1) = 0.0015 * 0.0015;
+        e(2, 2) = 15. * 15.;
+        reco::Vertex::Point p(0, 0, 0);
+        dummy = reco::Vertex(p, e, 0, 0, 0);
+    }
     
     
    // cout << "event=" << T_Event_EventNumber << endl;
@@ -148,6 +187,13 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     //caloExtractor = IsoDepositExtractorFactory::get()->create( caloExtractorName, caloExtractorPSet_, consumesCollector());
     
     //if (mapsValues_.size() != filterToMatch_.size()) cout << "warning MAP and filters are not matching 1 to 1 !!!" << endl;
+    
+    //fill rho offline
+    rhoHandles rhos(rhoInputTags_.size());
+    for (unsigned int iteRho = 0 ; iteRho < rhoInputTags_.size() ; iteRho++){
+        iEvent.getByLabel(rhoInputTags_[iteRho], rhos[iteRho]);
+        T_Event_Rho->push_back(*rhos[iteRho]);
+    }
     
     // get rho
     edm::Handle<double> rhoHandle;
@@ -404,12 +450,95 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    }
     
     antiMuEnrichementVeto = needToVeto;
-   
+    
+    if (doMuon_){
+        int nbMuons = recoMuons->size();
+     //   cout << "il y a " << nbMuons << " muons " << endl;
+        //loop on the muons in the event
+        for (int k = 0 ; k < nbMuons ; k++){
+            
+            const reco::Muon* muon = &((*recoMuons)[k]);
+            //  cout << "le muon" << k << " : eta=" << muon->eta() << " phi=" << muon->phi() << endl;
+
+            T_Muon_Eta->push_back(muon->eta());
+            T_Muon_Phi->push_back(muon->phi());
+            T_Muon_IsGlobalMuon->push_back(muon->isGlobalMuon());
+            T_Muon_IsPFMuon->push_back(muon->isPFMuon());
+            T_Muon_IsTrackerMuon->push_back(muon->isTrackerMuon());
+            T_Muon_IsCaloMuon->push_back(muon->isCaloMuon());
+            T_Muon_IsStandAloneMuon->push_back(muon->isStandAloneMuon());
+            T_Muon_IsMuon->push_back(muon->isMuon());
+            T_Muon_Energy->push_back(muon->energy());
+            T_Muon_Et->push_back(muon->et());
+            T_Muon_Pt->push_back(muon->pt());
+            T_Muon_Px->push_back(muon->px());
+            T_Muon_Py->push_back(muon->py());
+            T_Muon_Pz->push_back(muon->pz());
+            T_Muon_Mass->push_back(muon->mass());
+            T_Muon_charge->push_back(muon->charge());
+            
+            T_Muon_numberOfChambers->push_back(muon->numberOfChambers());
+            T_Muon_numberOfChambersRPC->push_back(muon->numberOfChambersNoRPC());
+            T_Muon_numberOfMatches->push_back(muon->numberOfMatches());
+            T_Muon_numberOfMatchedStations->push_back(muon->numberOfMatchedStations());
+            bool isMatchTheStation = muon::isGoodMuon(*muon, muon::TMOneStationTight);
+            bool isGlobalMuonPT = muon::isGoodMuon(*muon, muon::GlobalMuonPromptTight);
+            bool isGlobalMuonArbitrated = muon::isGoodMuon(*muon, muon::TrackerMuonArbitrated);
+            T_Muon_TMLastStationTight->push_back(isMatchTheStation);
+            T_Muon_IsGlobalMuon_PromptTight->push_back(isGlobalMuonPT);
+            T_Muon_IsTrackerMuonArbitrated->push_back(isGlobalMuonArbitrated);
+            
+            if (muon->globalTrack().isNull()) T_Muon_globalTrackChi2->push_back(-1); else T_Muon_globalTrackChi2->push_back(muon->globalTrack()->normalizedChi2());
+            if (muon->globalTrack().isNull()) T_Muon_validMuonHits->push_back(-1); else T_Muon_validMuonHits->push_back(muon->globalTrack()->hitPattern().numberOfValidMuonHits());
+            T_Muon_trkKink->push_back(muon->combinedQuality().trkKink);
+            if (muon->muonBestTrack().isNull()) {
+                T_Muon_trkNbOfTrackerLayers->push_back(-1);
+                T_Muon_trkError->push_back(-1);
+                T_Muon_dB->push_back(-1);
+                T_Muon_dBstop->push_back(-1);
+                T_Muon_dzPV->push_back(-1);
+                T_Muon_dzstop->push_back(-1);
+                T_Muon_trkValidPixelHits->push_back(-1);
+                T_Muon_trkNbOfValidTrackeHits->push_back(-1);
+            }
+            else {
+                T_Muon_trkNbOfTrackerLayers->push_back(muon->muonBestTrack()->hitPattern().trackerLayersWithMeasurement());
+                T_Muon_trkError->push_back(muon->muonBestTrack()->ptError());
+                T_Muon_trkValidPixelHits->push_back(muon->muonBestTrack()->hitPattern().numberOfValidPixelHits());
+                T_Muon_dB->push_back(fabs(muon->muonBestTrack()->dxy(pv->position())));
+                T_Muon_dBstop->push_back(fabs(muon->muonBestTrack()->dxy(pv->position())));
+                T_Muon_dzPV->push_back(fabs(muon->muonBestTrack()->dz(pv->position())));
+                T_Muon_dzstop->push_back(fabs(muon->muonBestTrack()->dz(pv->position())));
+                T_Muon_trkNbOfValidTrackeHits->push_back(muon->muonBestTrack()->hitPattern().numberOfValidTrackerHits());
+            }
+            T_Muon_isoR03_emEt->push_back(muon->isolationR03().emEt);
+            T_Muon_isoR03_hadEt->push_back(muon->isolationR03().hadEt);
+            T_Muon_isoR03_hoEt->push_back(muon->isolationR03().hoEt);
+            T_Muon_isoR03_sumPt->push_back(muon->isolationR03().sumPt);
+            T_Muon_isoR03_nTracks->push_back(muon->isolationR03().nTracks);
+            T_Muon_isoR03_nJets->push_back(muon->isolationR03().nJets);
+            T_Muon_chargedHadronIsoR04->push_back(muon->pfIsolationR04().sumChargedHadronPt);
+            T_Muon_neutralHadronIsoR04->push_back(muon->pfIsolationR04().sumNeutralHadronEt);
+            T_Muon_photonIsoR04->push_back(muon->pfIsolationR04().sumPhotonEt);
+            T_Muon_chargedHadronIsoPUR04->push_back(muon->pfIsolationR04().sumPUPt);
+            T_Muon_chargedHadronIsoR03->push_back(muon->pfIsolationR03().sumChargedHadronPt);
+            T_Muon_neutralHadronIsoR03->push_back(muon->pfIsolationR03().sumNeutralHadronEt);
+            T_Muon_photonIsoR03->push_back(muon->pfIsolationR03().sumPhotonEt);
+            T_Muon_chargedHadronIsoPUR03->push_back(muon->pfIsolationR03().sumPUPt);
+            
+
+            //PF clustering isolation
+            reco::MuonRef thisMuonRef = reco::MuonRef(recoMuons, k);
+            T_Muon_ecalPFiso->push_back(muonECALIsoMap[thisMuonRef]);
+            T_Muon_hcalPFiso->push_back(muonHCALIsoMap[thisMuonRef]);
+            
+        }
+    }
+
  
     mytree_->Fill();
-    
     endEvent();
-    
+
 }
 
 
@@ -427,6 +556,9 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Event_nPUm", &T_Event_nPUm, "T_Event_nPUm/I");
     mytree_->Branch("T_Event_nPUp", &T_Event_nPUp, "T_Event_nPUp/I");
     mytree_->Branch("T_Event_AveNTruePU", &T_Event_AveNTruePU, "T_Event_AveNTruePU/F");
+    
+    mytree_->Branch("T_Event_Rho", "std::vector<float>", &T_Event_Rho);
+
     
     mytree_->Branch("antiMuEnrichementVeto", &antiMuEnrichementVeto, "antiMuEnrichementVeto/I");
 
@@ -461,6 +593,63 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Gen_FromW", "std::vector<int>", &T_Gen_FromW);
     mytree_->Branch("T_Gen_FromTau", "std::vector<int>", &T_Gen_FromTau);
     
+    if (doMuon_){
+        
+        mytree_->Branch("T_Muon_Eta", "std::vector<float>", &T_Muon_Eta);
+        mytree_->Branch("T_Muon_Phi", "std::vector<float>", &T_Muon_Phi);
+        mytree_->Branch("T_Muon_Energy", "std::vector<float>", &T_Muon_Energy);
+        mytree_->Branch("T_Muon_Et", "std::vector<float>", &T_Muon_Et);
+        mytree_->Branch("T_Muon_Pt", "std::vector<float>", &T_Muon_Pt);
+        mytree_->Branch("T_Muon_Px", "std::vector<float>", &T_Muon_Px);
+        mytree_->Branch("T_Muon_Py", "std::vector<float>", &T_Muon_Py);
+        mytree_->Branch("T_Muon_Pz", "std::vector<float>", &T_Muon_Pz);
+        mytree_->Branch("T_Muon_Mass", "std::vector<float>", &T_Muon_Mass);
+        mytree_->Branch("T_Muon_IsGlobalMuon", "std::vector<bool>", &T_Muon_IsGlobalMuon);
+        mytree_->Branch("T_Muon_IsTrackerMuon", "std::vector<bool>", &T_Muon_IsTrackerMuon);
+        mytree_->Branch("T_Muon_IsPFMuon", "std::vector<bool>", &T_Muon_IsPFMuon);
+        mytree_->Branch("T_Muon_IsCaloMuon", "std::vector<bool>", &T_Muon_IsCaloMuon);
+        mytree_->Branch("T_Muon_IsStandAloneMuon", "std::vector<bool>", &T_Muon_IsStandAloneMuon);
+        mytree_->Branch("T_Muon_IsMuon", "std::vector<bool>", &T_Muon_IsMuon);
+        mytree_->Branch("T_Muon_IsGlobalMuon_PromptTight", "std::vector<bool>", &T_Muon_IsGlobalMuon_PromptTight);
+        mytree_->Branch("T_Muon_IsTrackerMuonArbitrated", "std::vector<bool>", &T_Muon_IsTrackerMuonArbitrated);
+        mytree_->Branch("T_Muon_numberOfChambers", "std::vector<int>", &T_Muon_numberOfChambers);
+        mytree_->Branch("T_Muon_numberOfChambersRPC", "std::vector<int>", &T_Muon_numberOfChambersRPC);
+        mytree_->Branch("T_Muon_numberOfMatches", "std::vector<int>", &T_Muon_numberOfMatches);
+        mytree_->Branch("T_Muon_numberOfMatchedStations", "std::vector<int>", &T_Muon_numberOfMatchedStations);
+        mytree_->Branch("T_Muon_charge", "std::vector<int>", &T_Muon_charge);
+        mytree_->Branch("T_Muon_TMLastStationTight", "std::vector<bool>", &T_Muon_TMLastStationTight);
+        mytree_->Branch("T_Muon_globalTrackChi2", "std::vector<float>", &T_Muon_globalTrackChi2);
+        mytree_->Branch("T_Muon_validMuonHits", "std::vector<int>", &T_Muon_validMuonHits);
+        mytree_->Branch("T_Muon_trkKink", "std::vector<float>", &T_Muon_trkKink);
+        mytree_->Branch("T_Muon_trkNbOfTrackerLayers", "std::vector<int>", &T_Muon_trkNbOfTrackerLayers);
+        mytree_->Branch("T_Muon_trkNbOfValidTrackeHits", "std::vector<int>", &T_Muon_trkNbOfValidTrackeHits);
+        mytree_->Branch("T_Muon_trkValidPixelHits", "std::vector<int>", &T_Muon_trkValidPixelHits);
+        mytree_->Branch("T_Muon_trkError", "std::vector<float>", &T_Muon_trkError);
+        mytree_->Branch("T_Muon_dB", "std::vector<float>", &T_Muon_dB);
+        mytree_->Branch("T_Muon_dzPV", "std::vector<float>", &T_Muon_dzPV);
+        mytree_->Branch("T_Muon_dBstop", "std::vector<float>", &T_Muon_dBstop);
+        mytree_->Branch("T_Muon_dzstop", "std::vector<float>", &T_Muon_dzstop);
+        mytree_->Branch("T_Muon_chargedHadronIsoR04", "std::vector<float>", &T_Muon_chargedHadronIsoR04);
+        mytree_->Branch("T_Muon_neutralHadronIsoR04", "std::vector<float>", &T_Muon_neutralHadronIsoR04);
+        mytree_->Branch("T_Muon_photonIsoR04", "std::vector<float>", &T_Muon_photonIsoR04);
+        mytree_->Branch("T_Muon_chargedHadronIsoPUR04", "std::vector<float>", &T_Muon_chargedHadronIsoPUR04);
+        mytree_->Branch("T_Muon_chargedHadronIsoR03", "std::vector<float>", &T_Muon_chargedHadronIsoR03);
+        mytree_->Branch("T_Muon_neutralHadronIsoR03", "std::vector<float>", &T_Muon_neutralHadronIsoR03);
+        mytree_->Branch("T_Muon_photonIsoR03", "std::vector<float>", &T_Muon_photonIsoR03);
+        mytree_->Branch("T_Muon_chargedHadronIsoPUR03", "std::vector<float>", &T_Muon_chargedHadronIsoPUR03);
+        mytree_->Branch("T_Muon_isoR03_emEt", "std::vector<float>", &T_Muon_isoR03_emEt);
+        mytree_->Branch("T_Muon_isoR03_hadEt", "std::vector<float>", &T_Muon_isoR03_hadEt);
+        mytree_->Branch("T_Muon_isoR03_hoEt", "std::vector<float>", &T_Muon_isoR03_hoEt);
+        mytree_->Branch("T_Muon_isoR03_sumPt", "std::vector<float>", &T_Muon_isoR03_sumPt);
+        mytree_->Branch("T_Muon_isoR03_nTracks", "std::vector<int>", &T_Muon_isoR03_nTracks);
+        mytree_->Branch("T_Muon_isoR03_nJets", "std::vector<int>", &T_Muon_isoR03_nJets);
+        mytree_->Branch("T_Muon_isoRingsMVA", "std::vector<float>", &T_Muon_isoRingsMVA);
+        
+        
+        mytree_->Branch("T_Muon_ecalPFiso", "std::vector<float>", &T_Muon_ecalPFiso);
+        mytree_->Branch("T_Muon_hcalPFiso", "std::vector<float>", &T_Muon_hcalPFiso);
+    }
+    
     /* mytree_->Branch("T_Elec_Eta", "std::vector<float>", &T_Elec_Eta);
      mytree_->Branch("T_Elec_Phi", "std::vector<float>", &T_Elec_Phi);
      mytree_->Branch("T_Elec_Pt", "std::vector<float>", &T_Elec_Pt);
@@ -484,6 +673,9 @@ void
 TriggerTest::beginEvent()
 {
     T_Event_pathsFired = new std::vector<int>;
+    
+    T_Event_Rho = new std::vector<float>;
+
     
     T_Trig_Eta = new std::vector<float>;
     T_Trig_Pt = new std::vector<float>;
@@ -512,6 +704,60 @@ TriggerTest::beginEvent()
     T_Gen_FromW = new std::vector<int>;
     T_Gen_FromTau = new std::vector<int>;
     
+    T_Muon_Eta = new std::vector<float>;
+    T_Muon_Phi = new std::vector<float>;
+    T_Muon_Energy = new std::vector<float>;
+    T_Muon_Et = new std::vector<float>;
+    T_Muon_Pt = new std::vector<float>;
+    T_Muon_Px = new std::vector<float>;
+    T_Muon_Py = new std::vector<float>;
+    T_Muon_Pz = new std::vector<float>;
+    T_Muon_Mass = new std::vector<float>;
+    T_Muon_IsGlobalMuon = new std::vector<bool>;
+    T_Muon_IsTrackerMuon = new std::vector<bool>;
+    T_Muon_IsPFMuon = new std::vector<bool>;
+    T_Muon_IsCaloMuon = new std::vector<bool>;
+    T_Muon_IsStandAloneMuon = new std::vector<bool>;
+    T_Muon_IsMuon = new std::vector<bool>;
+    T_Muon_IsGlobalMuon_PromptTight = new std::vector<bool>;
+    T_Muon_IsTrackerMuonArbitrated = new std::vector<bool>;
+    T_Muon_numberOfChambers = new std::vector<int>;
+    T_Muon_numberOfChambersRPC = new std::vector<int>;
+    T_Muon_numberOfMatches = new std::vector<int>;
+    T_Muon_numberOfMatchedStations = new std::vector<int>;
+    T_Muon_charge = new std::vector<int>;
+    T_Muon_TMLastStationTight = new std::vector<bool>;
+    T_Muon_globalTrackChi2 = new std::vector<float>;
+    T_Muon_validMuonHits = new std::vector<int>;
+    T_Muon_trkKink = new std::vector<float>;
+    T_Muon_trkNbOfTrackerLayers = new std::vector<int>;
+    T_Muon_trkNbOfValidTrackeHits = new std::vector<int>;
+    T_Muon_trkValidPixelHits = new std::vector<int>;
+    T_Muon_trkError = new std::vector<float>;
+    T_Muon_dB = new std::vector<float>;
+    T_Muon_dzPV = new std::vector<float>;
+    T_Muon_dBstop = new std::vector<float>;
+    T_Muon_dzstop = new std::vector<float>;
+    T_Muon_chargedHadronIsoR04 = new std::vector<float>;
+    T_Muon_neutralHadronIsoR04 = new std::vector<float>;
+    T_Muon_photonIsoR04 = new std::vector<float>;
+    T_Muon_chargedHadronIsoPUR04 = new std::vector<float>;
+    T_Muon_chargedHadronIsoR03 = new std::vector<float>;
+    T_Muon_neutralHadronIsoR03 = new std::vector<float>;
+    T_Muon_photonIsoR03 = new std::vector<float>;
+    T_Muon_chargedHadronIsoPUR03 = new std::vector<float>;
+    T_Muon_isoR03_emEt = new std::vector<float>;
+    T_Muon_isoR03_hadEt = new std::vector<float>;
+    T_Muon_isoR03_hoEt = new std::vector<float>;
+    T_Muon_isoR03_sumPt = new std::vector<float>;
+    T_Muon_isoR03_nTracks = new std::vector<int>;
+    T_Muon_isoR03_nJets = new std::vector<int>;
+    T_Muon_isoRingsMVA = new std::vector<float>;
+    
+    T_Muon_ecalPFiso = new std::vector<float>;
+    T_Muon_hcalPFiso = new std::vector<float>;
+    
+    
     /* T_Elec_Eta = new std::vector<float>;
      T_Elec_Phi = new std::vector<float>;
      T_Elec_Pt = new std::vector<float>;
@@ -525,7 +771,11 @@ TriggerTest::beginEvent()
 void
 TriggerTest::endEvent()
 {
+    
     delete T_Event_pathsFired;
+    
+    delete T_Event_Rho;
+
     
     delete T_Trig_Eta;
     delete T_Trig_Pt;
@@ -554,6 +804,60 @@ TriggerTest::endEvent()
     delete T_Gen_MotherID;
     delete T_Gen_FromW;
     delete T_Gen_FromTau;
+    
+    
+    delete T_Muon_Eta;
+    delete T_Muon_Phi;
+    delete T_Muon_Energy;
+    delete T_Muon_Et;
+    delete T_Muon_Pt;
+    delete T_Muon_Px;
+    delete T_Muon_Py;
+    delete T_Muon_Pz;
+    delete T_Muon_Mass;
+    delete T_Muon_IsGlobalMuon;
+    delete T_Muon_IsTrackerMuon;
+    delete T_Muon_IsPFMuon;
+    delete T_Muon_IsCaloMuon;
+    delete T_Muon_IsStandAloneMuon;
+    delete T_Muon_IsMuon;
+    delete T_Muon_IsGlobalMuon_PromptTight;
+    delete T_Muon_IsTrackerMuonArbitrated;
+    delete T_Muon_numberOfChambers;
+    delete T_Muon_numberOfChambersRPC;
+    delete T_Muon_numberOfMatches;
+    delete T_Muon_numberOfMatchedStations;
+    delete T_Muon_charge;
+    delete T_Muon_TMLastStationTight;
+    delete T_Muon_globalTrackChi2;
+    delete T_Muon_validMuonHits;
+    delete T_Muon_trkKink;
+    delete T_Muon_trkNbOfTrackerLayers;
+    delete T_Muon_trkNbOfValidTrackeHits;
+    delete T_Muon_trkValidPixelHits;
+    delete T_Muon_trkError;
+    delete T_Muon_dB;
+    delete T_Muon_dzPV;
+    delete T_Muon_dBstop;
+    delete T_Muon_dzstop;
+    delete T_Muon_chargedHadronIsoR04;
+    delete T_Muon_neutralHadronIsoR04;
+    delete T_Muon_photonIsoR04;
+    delete T_Muon_chargedHadronIsoPUR04;
+    delete T_Muon_chargedHadronIsoR03;
+    delete T_Muon_neutralHadronIsoR03;
+    delete T_Muon_photonIsoR03;
+    delete T_Muon_chargedHadronIsoPUR03;
+    delete T_Muon_isoR03_emEt;
+    delete T_Muon_isoR03_hadEt;
+    delete T_Muon_isoR03_hoEt;
+    delete T_Muon_isoR03_sumPt;
+    delete T_Muon_isoR03_nTracks;
+    delete T_Muon_isoR03_nJets;
+    delete T_Muon_isoRingsMVA;
+    
+    delete T_Muon_ecalPFiso;
+    delete T_Muon_hcalPFiso;
     
     /* delete T_Muon_Eta;
      delete T_Muon_Phi;
