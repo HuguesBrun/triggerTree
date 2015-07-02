@@ -55,6 +55,9 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByLabel("generator", genEvent);
     
     
+    if (genEvent->binningValues().size()>0)  T_Event_PUptHat2 = genEvent->binningValues()[0]; else T_Event_PUptHat2=-1;
+    T_Event_PUptHat=genEvent->qScale();
+    
     edm::Handle<reco::GenParticleCollection> genParticles;
     iEvent.getByLabel( "genParticles", genParticles );
 
@@ -82,11 +85,17 @@ TriggerTest::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         //The in-time crossing is getBunchCrossing = 0; negative ones are early, positive ones are late.
         for(PVI = puInfo->begin(); PVI != puInfo->end(); ++PVI) {
             
-            //    std::cout << " Pileup Information: bunchXing, nvtx: " << PVI->getBunchCrossing() << " " << PVI->getPU_NumInteractions() << std::endl;
+        //std::cout << " Pileup Information: bunchXing, nvtx: " << PVI->getBunchCrossing() << " " << PVI->getPU_NumInteractions() << std::endl;
             if(PVI->getBunchCrossing()==0){
                 T_Event_nPU =PVI->getPU_NumInteractions();
                 T_Event_nTruePU=PVI->getTrueNumInteractions();
-                
+                float pu_pT_hat_max = -1;
+                for(const auto& pu_pT_hat :  PVI->getPU_pT_hats()){
+                    if (pu_pT_hat>pu_pT_hat_max) pu_pT_hat_max = pu_pT_hat;
+                }
+                T_Event_PUeventPtHat = pu_pT_hat_max;
+                if (T_Event_PUeventPtHat>genEvent->qScale()) T_Event_PUdominated = 1; else T_Event_PUdominated=0;
+
             }
             
             else if(PVI->getBunchCrossing()==-1){
@@ -256,6 +265,10 @@ TriggerTest::beginJob()
     mytree_->Branch("T_Event_nPUm", &T_Event_nPUm, "T_Event_nPUm/I");
     mytree_->Branch("T_Event_nPUp", &T_Event_nPUp, "T_Event_nPUp/I");
     mytree_->Branch("T_Event_AveNTruePU", &T_Event_AveNTruePU, "T_Event_AveNTruePU/F");
+    mytree_->Branch("T_Event_PUptHat", &T_Event_PUptHat, "T_Event_PUptHat/F");
+    mytree_->Branch("T_Event_PUptHat2", &T_Event_PUptHat2, "T_Event_PUptHat2/F");
+    mytree_->Branch("T_Event_PUeventPtHat", &T_Event_PUeventPtHat, "T_Event_PUeventPtHat/F");
+    mytree_->Branch("T_Event_PUdominated", &T_Event_PUdominated, "T_Event_PUdominated/I");
     
     mytree_->Branch("antiMuEnrichementVeto", &antiMuEnrichementVeto, "antiMuEnrichementVeto/I");
 
