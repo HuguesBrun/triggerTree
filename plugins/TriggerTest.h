@@ -117,7 +117,7 @@ class TriggerTest : public edm::EDAnalyzer {
       virtual bool hasTauasMother(const reco::GenParticle);
 
     
-    w
+   
     std::vector<int> triggerBits_;
     
       //virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
